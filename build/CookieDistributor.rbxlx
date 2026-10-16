@@ -64,9 +64,9 @@ Apps.list = {
 		title = "GearUp",
 		blurb = "Buy better ovens, mixers and racks.",
 		color = "Butter",
-		unlockHint = "Deliver your first order to unlock GearUp.",
-		unlock = function(data)
-			return data.milestones.firstOrderDone == true
+		unlockHint = "GearUp is always available.",
+		unlock = function()
+			return true
 		end,
 	},
 	{
@@ -406,7 +406,7 @@ Milestones.list = {
 	{
 		id = "firstOrderDone",
 		title = "Deliver your first order",
-		hint = "Open the phone (P), accept Mrs. Park's order and bake it at your kitchen counter.",
+		hint = "Open the phone (P), accept Mrs. Park's order, then tap the Bake button to bake it.",
 		done = function(data)
 			return data.milestones.firstOrderDone == true
 		end,
@@ -2428,6 +2428,7 @@ local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local RateLimit = require(ReplicatedStorage.Shared.Modules.RateLimit)
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
 
 local MAX_DISTANCE = 14 -- studs from the nearest edge of the station
@@ -2473,6 +2474,31 @@ function InteractionService:IsNearStation(player: Player, tag: string): boolean
 		end
 	end
 	return false
+end
+
+-- Moves the player's character to the front of the first station with this tag (used by the HUD Bake shortcut).
+function InteractionService:BringToStation(player: Player, tag: string): boolean
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if not root or not root:IsA("BasePart") then
+		return false
+	end
+	local target: BasePart? = nil
+	for _, inst in CollectionService:GetTagged(tag) do
+		if inst:IsA("BasePart") and inst:IsDescendantOf(workspace) then
+			if inst.Name == "Counter" or not target then
+				target = inst
+			end
+		end
+	end
+	if not target then
+		return false
+	end
+	local distance = distanceToPart(player, target)
+	if distance and distance <= MAX_DISTANCE - 4 then
+		return true -- already close enough, do not move them
+	end
+	root.CFrame = CFrame.new(target.Position + Vector3.new(0, target.Size.Y / 2 + 3, target.Size.Z / 2 + 4))
+	return true
 end
 
 local function onTriggered(part: BasePart, tag: string, def: StationDef, player: Player)
@@ -2522,7 +2548,14 @@ local function setup(part: Instance, tag: string)
 	end)
 end
 
-function InteractionService:Init() end
+function InteractionService:Init()
+	Remotes.func("GoToKitchen").OnServerInvoke = function(player: Player): boolean
+		if not RateLimit.check(player, "GoToKitchen", 1) then
+			return false
+		end
+		return InteractionService:BringToStation(player, "BakeStation")
+	end
+end
 
 function InteractionService:Start()
 	for tag in STATION_TYPES do
@@ -6282,9 +6315,9 @@ local function objectiveFor(state: any, orders: { any }): string
 		if best.state == "Available" then
 			return `Open your phone (P or the Phone button) and accept {best.customerName}'s order.`
 		elseif best.state == "Accepted" then
-			return `Walk to your kitchen counter or oven and press E to bake {best.recipeName}.`
+			return `Tap the 🍪 Bake button (bottom right) to bake {best.recipeName}. Or walk to the kitchen counter and press E.`
 		elseif best.state == "In Production" then
-			return "Finish your bake at the kitchen station (press E to continue)."
+			return "Finish your bake: tap the 🍪 Bake button (or press E at the counter) to continue."
 		elseif best.state == "Ready" then
 			return `Open your phone and deliver the cookies to {best.customerName}.`
 		end
@@ -6421,6 +6454,13 @@ function HUD:Start()
 	end)
 	actionButton(gui, "🔧 Gear", Theme.Butter, UDim2.new(1, -144, 1, -12), function()
 		UIBus.Open:Fire("PhoneGear")
+	end)
+	actionButton(gui, "🍪 Bake", Theme.Mint, UDim2.new(1, -276, 1, -12), function()
+		-- the server walks you to the kitchen counter if you are far away, then the kitchen opens
+		local ok = Remotes.func("GoToKitchen"):InvokeServer()
+		if ok then
+			UIBus.Open:Fire("Bake")
+		end
 	end)
 
 	local function refreshObjective()

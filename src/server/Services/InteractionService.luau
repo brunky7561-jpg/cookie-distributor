@@ -6,6 +6,7 @@ local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local RateLimit = require(ReplicatedStorage.Shared.Modules.RateLimit)
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
 
 local MAX_DISTANCE = 14 -- studs from the nearest edge of the station
@@ -51,6 +52,31 @@ function InteractionService:IsNearStation(player: Player, tag: string): boolean
 		end
 	end
 	return false
+end
+
+-- Moves the player's character to the front of the first station with this tag (used by the HUD Bake shortcut).
+function InteractionService:BringToStation(player: Player, tag: string): boolean
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if not root or not root:IsA("BasePart") then
+		return false
+	end
+	local target: BasePart? = nil
+	for _, inst in CollectionService:GetTagged(tag) do
+		if inst:IsA("BasePart") and inst:IsDescendantOf(workspace) then
+			if inst.Name == "Counter" or not target then
+				target = inst
+			end
+		end
+	end
+	if not target then
+		return false
+	end
+	local distance = distanceToPart(player, target)
+	if distance and distance <= MAX_DISTANCE - 4 then
+		return true -- already close enough, do not move them
+	end
+	root.CFrame = CFrame.new(target.Position + Vector3.new(0, target.Size.Y / 2 + 3, target.Size.Z / 2 + 4))
+	return true
 end
 
 local function onTriggered(part: BasePart, tag: string, def: StationDef, player: Player)
@@ -100,7 +126,14 @@ local function setup(part: Instance, tag: string)
 	end)
 end
 
-function InteractionService:Init() end
+function InteractionService:Init()
+	Remotes.func("GoToKitchen").OnServerInvoke = function(player: Player): boolean
+		if not RateLimit.check(player, "GoToKitchen", 1) then
+			return false
+		end
+		return InteractionService:BringToStation(player, "BakeStation")
+	end
+end
 
 function InteractionService:Start()
 	for tag in STATION_TYPES do

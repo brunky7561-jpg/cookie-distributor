@@ -42,9 +42,9 @@ local function objectiveFor(state: any, orders: { any }): string
 		if best.state == "Available" then
 			return `Open your phone (P or the Phone button) and accept {best.customerName}'s order.`
 		elseif best.state == "Accepted" then
-			return `Walk to your kitchen counter or oven and press E to bake {best.recipeName}.`
+			return `Tap the 🍪 Bake button (bottom right) to bake {best.recipeName}. Or walk to the kitchen counter and press E.`
 		elseif best.state == "In Production" then
-			return "Finish your bake at the kitchen station (press E to continue)."
+			return "Finish your bake: tap the 🍪 Bake button (or press E at the counter) to continue."
 		elseif best.state == "Ready" then
 			return `Open your phone and deliver the cookies to {best.customerName}.`
 		end
@@ -181,6 +181,13 @@ function HUD:Start()
 	end)
 	actionButton(gui, "🔧 Gear", Theme.Butter, UDim2.new(1, -144, 1, -12), function()
 		UIBus.Open:Fire("PhoneGear")
+	end)
+	actionButton(gui, "🍪 Bake", Theme.Mint, UDim2.new(1, -276, 1, -12), function()
+		-- the server walks you to the kitchen counter if you are far away, then the kitchen opens
+		local ok = Remotes.func("GoToKitchen"):InvokeServer()
+		if ok then
+			UIBus.Open:Fire("Bake")
+		end
 	end)
 
 	local function refreshObjective()
