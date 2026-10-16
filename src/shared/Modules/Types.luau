@@ -4,7 +4,7 @@ export type Ingredient = {
 	name: string,
 	category: string,
 	cost: number,
-	craving: number,
+	appeal: number,
 	tags: { string },
 	sideEffects: { string },
 }
@@ -15,7 +15,7 @@ export type Synergy = {
 	multiplier: number,
 }
 
-export type Personality = "Foodie" | "BargainHunter" | "SugarFiend" | "HealthNut" | "Trendsetter" | "Grump"
+export type Personality = "Foodie" | "BargainHunter" | "SweetTooth" | "HealthNut" | "Trendsetter" | "Grump"
 
 export type CustomerTemplate = {
 	id: string,
@@ -23,8 +23,8 @@ export type CustomerTemplate = {
 	personality: Personality,
 	loves: { string },
 	hates: { string },
-	cravingMin: number,
-	cravingMax: number,
+	appealMin: number,
+	appealMax: number,
 	budget: number,
 }
 

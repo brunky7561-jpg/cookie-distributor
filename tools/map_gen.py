@@ -290,7 +290,7 @@ def build_plaza():
     cyl(out, "FountainWater", 0, 2.2, 0, 0.6, 23, C(80, 160, 220), "Glass", transp=0.35, collide=False)
     cyl(out, "FountainColumn", 0, 5, 0, 8, 3, C(190, 190, 196), "Concrete")
     # giant cookie monument
-    cyl(out, "CookieMonument", 0, 14, 0, 3, 14, C(214, 160, 90), "SmoothPlastic", axis="x", tags=("Landmark",))
+    cyl(out, "Cookie Monument", 0, 14, 0, 3, 14, C(214, 160, 90), "SmoothPlastic", axis="x", tags=("Landmark",))
     for _ in range(9):
         a, r = rng.random() * math.tau, rng.random() * 4.5
         for sx in (-1.7, 1.7):
@@ -303,8 +303,8 @@ def build_plaza():
     for sx in (-1, 1):
         for sz in (-1, 1):
             oak(out, sx * 36, sz * 20 + (0 if sz < 0 else 0), 0.7)
-    out.append(part("Spawn", (0, 0.9, 40), (12, 1, 12), C(255, 214, 150), "SmoothPlastic", cls="SpawnLocation"))
-    ring(out, "Cookie Square Meetup", -24, 34, d=9)
+    out.append(part("Spawn", (-30, 0.5, -57), (8, 1, 8), C(255, 214, 150), "SmoothPlastic", cls="SpawnLocation"))
+    ring(out, "Market Square", -24, 34, d=9)
     # parked food truck (decor)
     f = Frame(out, 38, 36, 0.3)
     f.block("TruckBody", 0, 5.4, 0, 20, 9, 9, C(250, 196, 50), "SmoothPlastic")
@@ -323,8 +323,8 @@ def build_plaza():
     g.block("Sign", 0, 18.8, 14.2, 28, 3, 0.6, C(40, 120, 70), "SmoothPlastic")
     g.gable(40, 28, 18, 3, C(120, 90, 70), "Wood", over=0.5)
     # property lot
-    label_marker(out, "Food Truck Lot - $2,500", 78, -26, 24, 16, "PropertyPlot", C(120, 220, 140))
-    return folder("CookieSquare", out)
+    label_marker(out, "Corner Cookie Shop Plot", 28, -68, 24, 16, "PropertyPlot", C(120, 220, 140))
+    return folder("MarketSquare", out)
 
 
 def Rx_tilt(t):
@@ -343,7 +343,7 @@ def build_apartment():
         f.block("FrontWall", sx, 8, 11.5, 14, 14, 1, C(240, 226, 200), "SmoothPlastic")
     f.block("FrontHeader", 0, 12, 11.5, 8, 6, 1, C(240, 226, 200), "SmoothPlastic")
     f.block("Roof", 0, 15.4, 0, 40, 1, 28, C(110, 70, 60), "Slate")
-    f.block("Sign", 0, 17.2, 13, 18, 2.4, 0.6, C(250, 200, 80), "SmoothPlastic", tags=("Landmark",))
+    f.block("Starter House", 0, 17.2, 13, 18, 2.4, 0.6, C(250, 200, 80), "SmoothPlastic", tags=("Landmark",))
     f.block("Counter", -9, 2.5, -8, 14, 4, 4, C(196, 140, 90), "Wood", tags=("BakeStation",))
     f.block("CounterTop", -9, 4.6, -8, 14.5, 0.4, 4.5, C(235, 232, 226), "Granite")
     f.block("Oven", 4, 2.5, -9, 6, 4.4, 4, C(40, 40, 46), "Metal", tags=("BakeStation",))
@@ -355,7 +355,13 @@ def build_apartment():
     f.block("Bed", 12, 1.6, 3, 6, 1.6, 9, C(90, 130, 200), "Fabric")
     f.block("Pillow", 12, 2.6, 6.8, 4, 0.8, 1.6, WHITE, "Fabric")
     f.block("Rug", 0, 1.05, 4, 10, 0.1, 7, C(190, 70, 70), "Fabric", collide=False)
-    ring(out, "Kitchen - Press K to bake", -30 - 9, -75 - 4, tag="Landmark", color=C(255, 220, 120), d=7, y=1.1)
+    # short path from the front door to the square, and a supply kiosk beside the spawn
+    block(out, "StarterPath", -30, 0.15, -56, 6, 0.3, 14, CONCRETE, "Concrete")
+    k = Frame(out, -14, -55, -math.pi / 2)
+    k.block("Supply Kiosk", 0, 4.5, 0, 8, 9, 6, C(250, 238, 200), "SmoothPlastic", tags=("Landmark",))
+    k.block("Awning", 0, 8.4, 3.8, 9, 0.5, 3.5, C(238, 120, 109), "Fabric", rot=Rx_tilt(0.2))
+    k.block("Counter", 0, 3, 3.2, 7, 1, 1.2, WOOD, "Wood")
+    ring(out, "Your Kitchen (press E to bake)", -30 - 9, -75 - 4, tag="Landmark", color=C(255, 220, 120), d=7, y=1.1)
     return folder("StarterApartment", out)
 
 
@@ -379,13 +385,13 @@ def build_maple_heights():
     f.block("GazeboFloor", 0, 0.4, 0, 10.5, 0.6, 10.5, C(210, 190, 160), "WoodPlanks")
     f.block("GazeboRoof", 0, 8.4, 0, 12, 0.8, 12, C(180, 70, 60), "Slate")
     f.block("GazeboTop", 0, 9.6, 0, 5, 1.6, 5, C(180, 70, 60), "Slate")
-    ring(out, "Maple Park Gazebo", -125, -88, d=9)
+    ring(out, "Starter Row Gazebo", -125, -88, d=9)
     for bx in (-150, -110, -105):
         bench(out, bx, -112, 0)
     for tx, tz in ((-175, -92), (-150, -88), (-100, -90), (-172, -108), (-96, -112)):
         oak(out, tx, tz, rng.uniform(0.8, 1.2), leaf=C(236, 150, 170) if rng.random() < 0.4 else None)
-    label_marker(out, "Garage Kitchen Lot - $8,000", -75, -110, 24, 16, "PropertyPlot", C(120, 220, 140))
-    return folder("MapleHeights", out)
+    label_marker(out, "Garage Kitchen Plot", -75, -110, 24, 16, "PropertyPlot", C(120, 220, 140))
+    return folder("StarterRow", out)
 
 
 def build_downtown():
@@ -423,13 +429,13 @@ def build_downtown():
         for sz in (-3.4, 3.4):
             f.ball("Chip", math.cos(a) * r, 125 + math.sin(a) * r, sz, 2.6, C(70, 42, 28), "SmoothPlastic")
     out_names = [("Cookie Tower", 60, -190)]
-    ring(out, "Sugar Street Plaza", 130, -65, d=10)
-    label_marker(out, "Corner Storefront Lot - $25,000", 200, -170, 28, 18, "PropertyPlot", C(120, 220, 140))
-    label_marker(out, "Downtown Flagship Lot - $200,000", 155, -200, 36, 24, "PropertyPlot", C(255, 220, 120))
+    ring(out, "Business Avenue Plaza", 130, -65, d=10)
+    label_marker(out, "Neighborhood Bakery Plot", 200, -170, 28, 18, "PropertyPlot", C(120, 220, 140))
+    label_marker(out, "Cookie Workshop HQ Plot", 155, -200, 36, 24, "PropertyPlot", C(255, 220, 120))
     for x in (25, 75, 125, 175, 225):
         lamp(out, x, -59)
         lamp(out, x, -71)
-    return folder("SugarStreetDowntown", out)
+    return folder("BusinessAvenue", out)
 
 
 def build_campus():
@@ -472,7 +478,7 @@ def build_campus():
 def build_market():
     out = []
     ground(out, "MarketGround", 125, 125, 240, 240, C(168, 150, 112), "Ground", y=0.05, t=0.1)
-    ring(out, "Farmers Market Square", 125, 65, d=10)
+    ring(out, "Seasonal Plaza", 125, 65, d=10)
     produce = [C(210, 50, 40), C(240, 190, 40), C(90, 170, 60), C(230, 120, 30), C(150, 60, 160)]
     for z, yaw in ((45, 0), (85, math.pi)):
         for i, x in enumerate((35, 75, 115, 155, 195)):
@@ -502,7 +508,7 @@ def build_market():
     cyl(out, "ScarecrowHat", 125, 12, 195, 1.4, 3.2, C(120, 80, 50), "Fabric")
     for hx, hz in ((60, 158), (180, 158), (190, 225)):
         cyl(out, "HayBale", hx, 2, hz, 4, 4.5, C(224, 196, 100), "Fabric", axis="x")
-    return folder("FarmersMarket", out)
+    return folder("SeasonalPlaza", out)
 
 
 def build_woods():
@@ -557,7 +563,7 @@ def build_industrial():
         f.block("RollDoor", 0, 8, 22.6, 22, 16, 0.5, C(70, 76, 84), "Metal")
         f.block("Stripe", 0, 20, 22.6, 60, 2, 0.3, pick(BRIGHT), "SmoothPlastic")
         f.block("Roof", 0, 26.6, 0, 62, 1.2, 47, C(80, 86, 92), "Metal")
-    label_marker(out, "Warehouse Bakery Lot - $75,000", 100, -272, 36, 14, "PropertyPlot", C(120, 220, 140))
+    label_marker(out, "Commercial Kitchen Plot", 100, -272, 36, 14, "PropertyPlot", C(120, 220, 140))
     # shipping containers
     cols = [C(200, 70, 60), C(60, 110, 190), C(230, 170, 50), C(70, 150, 90), C(150, 90, 170)]
     for cx in (285, 305, 325):
@@ -586,7 +592,7 @@ def build_industrial():
     f.block("Door", 0, 4, 6.1, 4, 8, 0.4, C(30, 30, 34), "Metal")
     f.block("Sign", 0, 11, 6.2, 12, 1.6, 0.4, C(90, 255, 130), "Neon")
     ring(out, "Back-Alley Wholesaler", 40, -262, tag="MeetupSpot", color=C(120, 255, 150), d=8)
-    return folder("IndustrialYards", out)
+    return folder("IndustrialLane", out)
 
 
 def build_bay():

@@ -5,7 +5,8 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
-local HUD = require(script.Parent.HUD)
+local HUD = require(script.Parent.HUDController)
+local UIBus = require(script.Parent.UIBus)
 
 local PhoneController = {}
 
@@ -112,14 +113,14 @@ function PhoneController:Start()
 			local any = false
 			for _, b in (state and state.batches) or {} do
 				any = true
-				local choice = btn(`{b.name}  Q{math.floor(b.quality * 100)}%  Craving {b.craving}  x{b.count}`)
+				local choice = btn(`{b.name}  Q{math.floor(b.quality * 100)}%  Appeal {b.appeal}  x{b.count}`)
 				choice.Activated:Once(function()
 					local ok, res = Remotes.func("DeliverOrder"):InvokeServer(order.id, b.id)
 					if ok then
 						orders[order.id] = nil
 						chooseFor = nil
 						say(
-							`{res.customerName}: "{res.reaction}"  +${res.pay}  ({res.relationship}){if res.ghosted then " They need a break from cookies." else ""}`
+							`{res.customerName}: "{res.reaction}"  +${res.pay}  ({res.relationship})`
 						)
 					else
 						say(tostring(res))
@@ -177,12 +178,22 @@ function PhoneController:Start()
 		end
 	end)
 
+	local function toggle()
+		gui.Enabled = not gui.Enabled
+		if gui.Enabled then
+			render()
+		end
+	end
+
+	UIBus.Toggle.Event:Connect(function(name)
+		if name == "Phone" then
+			toggle()
+		end
+	end)
+
 	ContextActionService:BindAction("TogglePhone", function(_, inputState)
 		if inputState == Enum.UserInputState.Begin then
-			gui.Enabled = not gui.Enabled
-			if gui.Enabled then
-				render()
-			end
+			toggle()
 		end
 		return Enum.ContextActionResult.Pass
 	end, false, Enum.KeyCode.P)

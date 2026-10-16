@@ -4,7 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Ingredients = require(ReplicatedStorage.Shared.Config.Ingredients)
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
-local DataService = require(script.Parent.DataService)
+local PlayerDataService = require(script.Parent.PlayerDataService)
 
 local MAX_BUY = 50
 local XP_PER_LEVEL = 100 -- level n needs n * XP_PER_LEVEL to reach n + 1
@@ -13,25 +13,25 @@ local RARE_UNLOCK_LEVEL = 5
 local EconomyService = {}
 
 function EconomyService:AddCash(player: Player, amount: number)
-	local data = DataService:Get(player)
+	local data = PlayerDataService:Get(player)
 	if data then
 		data.cash += amount
-		DataService:Replicate(player)
+		PlayerDataService:Replicate(player)
 	end
 end
 
 function EconomyService:TrySpend(player: Player, amount: number): boolean
-	local data = DataService:Get(player)
+	local data = PlayerDataService:Get(player)
 	if not data or amount < 0 or data.cash < amount then
 		return false
 	end
 	data.cash -= amount
-	DataService:Replicate(player)
+	PlayerDataService:Replicate(player)
 	return true
 end
 
 function EconomyService:AddXp(player: Player, amount: number)
-	local data = DataService:Get(player)
+	local data = PlayerDataService:Get(player)
 	if not data then
 		return
 	end
@@ -40,7 +40,7 @@ function EconomyService:AddXp(player: Player, amount: number)
 		data.xp -= data.level * XP_PER_LEVEL
 		data.level += 1
 	end
-	DataService:Replicate(player)
+	PlayerDataService:Replicate(player)
 end
 
 function EconomyService:Init()
@@ -50,7 +50,7 @@ function EconomyService:Init()
 		end
 		qty = math.floor(qty)
 		local ing = Ingredients[id]
-		local data = DataService:Get(player)
+		local data = PlayerDataService:Get(player)
 		if not ing or not data or qty < 1 or qty > MAX_BUY then
 			return false, "bad request"
 		end
@@ -61,7 +61,7 @@ function EconomyService:Init()
 			return false, "not enough cash"
 		end
 		data.ingredients[id] = (data.ingredients[id] or 0) + qty
-		DataService:Replicate(player)
+		PlayerDataService:Replicate(player)
 		return true
 	end
 end

@@ -1,18 +1,17 @@
 --!strict
 -- Baking UI: pick ingredients, then stop the mixer and pull the tray at the right moment.
--- Open with K, or by using a ProximityPrompt on any Part tagged "BakeStation" in Workspace.
-local CollectionService = game:GetService("CollectionService")
-local ContextActionService = game:GetService("ContextActionService")
+-- Opens when the server accepts an interaction with a station tagged "BakeStation" (see InteractionService).
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Ingredients = require(ReplicatedStorage.Shared.Config.Ingredients)
-local CravingCalc = require(ReplicatedStorage.Shared.Modules.CravingCalc)
+local AppealCalc = require(ReplicatedStorage.Shared.Modules.AppealCalc)
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
-local HUD = require(script.Parent.HUD)
+local HUD = require(script.Parent.HUDController)
+local UIBus = require(script.Parent.UIBus)
 
-local BakeController = {}
+local BakingController = {}
 
 local BROWN = Color3.fromRGB(94, 64, 40)
 local CREAM = Color3.fromRGB(255, 232, 190)
@@ -43,9 +42,9 @@ local function button(parent: Instance, text: string): TextButton
 	return b
 end
 
-function BakeController:Init() end
+function BakingController:Init() end
 
-function BakeController:Start()
+function BakingController:Start()
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "Bake"
 	gui.ResetOnSpawn = false
@@ -117,7 +116,7 @@ function BakeController:Start()
 	local function showResult(batch: any)
 		clear()
 		label(frame, `{batch.name}`, 30)
-		label(frame, `Quality {math.floor(batch.quality * 100)}%   Craving {batch.craving}`, 24)
+		label(frame, `Quality {math.floor(batch.quality * 100)}%   Appeal {batch.appeal}`, 24)
 		label(frame, `Effects: {if #batch.effects > 0 then table.concat(batch.effects, ", ") else "none"}`, 24)
 		label(frame, `{batch.count} cookies added to your inventory`, 24)
 		local again = button(frame, "Bake again")
@@ -168,8 +167,8 @@ function BakeController:Start()
 				preview.Text = "Nothing selected"
 				return
 			end
-			local r = CravingCalc.compute(picked, 0.85)
-			preview.Text = `{#picked}/{MAX_INGREDIENTS} picked   Craving ~{r.score}`
+			local r = AppealCalc.compute(picked, 0.85)
+			preview.Text = `{#picked}/{MAX_INGREDIENTS} picked   Appeal ~{r.score}`
 		end
 
 		local state = HUD.state
@@ -203,6 +202,11 @@ function BakeController:Start()
 			end
 		end
 		refresh()
+		local close = button(frame, "Close")
+		close.LayoutOrder = 1002
+		close.Activated:Once(function()
+			gui.Enabled = false
+		end)
 		local go = button(frame, "Start baking")
 		go.LayoutOrder = 1001
 		go.Activated:Once(function()
@@ -214,38 +218,14 @@ function BakeController:Start()
 		end)
 	end
 
-	local function toggle()
-		gui.Enabled = not gui.Enabled
-		if gui.Enabled and not busy then
-			showPicker()
-		end
-	end
-
-	ContextActionService:BindAction("ToggleBake", function(_, inputState)
-		if inputState == Enum.UserInputState.Begin then
-			toggle()
-		end
-		return Enum.ContextActionResult.Pass
-	end, false, Enum.KeyCode.K)
-
-	local function hookStation(part: Instance)
-		if not part:IsA("BasePart") or part:FindFirstChildOfClass("ProximityPrompt") then
-			return
-		end
-		local prompt = Instance.new("ProximityPrompt")
-		prompt.ActionText = "Bake"
-		prompt.ObjectText = "Kitchen"
-		prompt.Parent = part
-		prompt.Triggered:Connect(function()
-			if not gui.Enabled then
-				toggle()
+	UIBus.Open.Event:Connect(function(panel)
+		if panel == "Bake" then
+			gui.Enabled = true
+			if not busy then
+				showPicker()
 			end
-		end)
-	end
-	for _, p in CollectionService:GetTagged("BakeStation") do
-		hookStation(p)
-	end
-	CollectionService:GetInstanceAddedSignal("BakeStation"):Connect(hookStation)
+		end
+	end)
 end
 
-return BakeController
+return BakingController
