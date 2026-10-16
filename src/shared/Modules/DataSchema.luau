@@ -6,6 +6,7 @@ local Equipment = require(Config.Equipment)
 local Ingredients = require(Config.Ingredients)
 local Properties = require(Config.Properties)
 local Staff = require(Config.Staff)
+local Vehicles = require(Config.Vehicles)
 local Recipes = require(Config.Recipes)
 
 local DataSchema = {}
@@ -27,6 +28,7 @@ function DataSchema.default(): any
 		recipes = { classic_chip = true, simple_sugar = true },
 		recipeBook = {}, -- per recipe: { name, bakes, best, grade, custom }
 		properties = { apartment = true },
+		vehicles = {},
 		staff = {}, -- hired bakers: { id, recipeId, bakes, progress, status, unpaid }
 		equipment = { basic_oven = true, mixing_bowl = true, cooling_rack = true },
 		customers = {},
@@ -310,6 +312,9 @@ function DataSchema.sanitize(raw: any): any
 	end
 	d.history = sanitizeHistory(raw.history)
 	d.staff = sanitizeStaff(raw.staff)
+	d.vehicles = boolMap(raw.vehicles, function(id)
+		return Vehicles.catalog[id] ~= nil
+	end)
 	return d
 end
 
