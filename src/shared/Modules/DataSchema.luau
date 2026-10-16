@@ -5,6 +5,7 @@ local Config = script.Parent.Parent.Config
 local Equipment = require(Config.Equipment)
 local Ingredients = require(Config.Ingredients)
 local Properties = require(Config.Properties)
+local Market = require(Config.Market)
 local Staff = require(Config.Staff)
 local Vehicles = require(Config.Vehicles)
 local Recipes = require(Config.Recipes)
@@ -29,6 +30,10 @@ function DataSchema.default(): any
 		recipeBook = {}, -- per recipe: { name, bakes, best, grade, custom }
 		properties = { apartment = true },
 		vehicles = {},
+		contract = false, -- active contract offer or false
+		contractNextAt = 0,
+		contractWins = 0,
+		contractLosses = 0,
 		staff = {}, -- hired bakers: { id, recipeId, bakes, progress, status, unpaid }
 		equipment = { basic_oven = true, mixing_bowl = true, cooling_rack = true },
 		customers = {},
@@ -107,6 +112,29 @@ local function sanitizeBatch(b: any): any?
 		packaged = b.packaged == true,
 		displayed = b.displayed == true,
 		-- reservedFor is intentionally dropped: open orders are not saved, so no box may stay reserved
+	}
+end
+
+local function sanitizeContract(v: any): any
+	if type(v) ~= "table" or type(v.recipeId) ~= "string" or not Recipes.catalog[v.recipeId] then
+		return false
+	end
+	local rival = nil
+	for _, r in Market.rivals do
+		if r.id == v.rivalId then
+			rival = r.id
+		end
+	end
+	if not rival then
+		return false
+	end
+	return {
+		rivalId = rival,
+		recipeId = v.recipeId,
+		count = int(v.count, Market.CONTRACT_COUNT, 1, 100),
+		minScore = int(v.minScore, Market.CONTRACT_MIN_SCORE, 0, 100),
+		pay = int(v.pay, 100, 0, 1e6),
+		expiresAt = int(v.expiresAt, 0, 0, 2 ^ 40),
 	}
 end
 
@@ -311,6 +339,10 @@ function DataSchema.sanitize(raw: any): any
 		d.nextDeliveryId = math.max(d.nextDeliveryId, dl.id + 1)
 	end
 	d.history = sanitizeHistory(raw.history)
+	d.contract = sanitizeContract(raw.contract)
+	d.contractNextAt = int(raw.contractNextAt, 0, 0, 2 ^ 40)
+	d.contractWins = int(raw.contractWins, 0, 0, 1e9)
+	d.contractLosses = int(raw.contractLosses, 0, 0, 1e9)
 	d.staff = sanitizeStaff(raw.staff)
 	d.vehicles = boolMap(raw.vehicles, function(id)
 		return Vehicles.catalog[id] ~= nil

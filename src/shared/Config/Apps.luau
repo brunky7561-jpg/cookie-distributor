@@ -98,6 +98,16 @@ Apps.list = {
 			return data.level >= 4
 		end,
 	},
+	{
+		id = "marketpulse",
+		title = "Market Pulse",
+		blurb = "Daily market events, rival contracts and the leaderboard.",
+		color = "Blueberry",
+		unlockHint = "Reach level 2 to unlock Market Pulse.",
+		unlock = function(data)
+			return data.level >= 2 and data.milestones.firstOrderDone == true
+		end,
+	},
 } :: { AppDef }
 
 Apps.byId = {} :: { [string]: AppDef }
