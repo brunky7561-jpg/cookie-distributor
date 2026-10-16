@@ -179,6 +179,7 @@ function HUD:Start()
 			if top then
 				trackText.Text = `ORDER: {top.customerName}, {top.count}x {top.recipeName}\n[{top.state}]`
 			end
+			goalCard.Visible = HUD.state.settings == nil or HUD.state.settings.guidance ~= false
 			local goal = Milestones.next(HUD.state)
 			if goal then
 				goalText.Text = goal.title

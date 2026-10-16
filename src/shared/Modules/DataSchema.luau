@@ -5,6 +5,7 @@ local Config = script.Parent.Parent.Config
 local Equipment = require(Config.Equipment)
 local Ingredients = require(Config.Ingredients)
 local Properties = require(Config.Properties)
+local Brand = require(Config.Brand)
 local Market = require(Config.Market)
 local Staff = require(Config.Staff)
 local Vehicles = require(Config.Vehicles)
@@ -43,7 +44,7 @@ function DataSchema.default(): any
 		deliveries = {}, -- paid PantryDash orders not yet collected: { id, items, propertyId, arriveAt }
 		nextDeliveryId = 1,
 		history = {}, -- last completed orders for the phone
-		settings = { guidance = true, effects = true, seenApps = {} },
+		settings = { guidance = true, effects = true, seenApps = {}, textScale = 1, sfx = 0.6, brandName = "", brandColor = 1 },
 	}
 end
 
@@ -260,7 +261,7 @@ function DataSchema.migrate(raw: any): any
 		-- v1 (milestones 0 and 1): no equipment, stats, settings or reputation; recipe names instead of ids
 		raw.equipment = raw.equipment or { basic_oven = true, mixing_bowl = true, cooling_rack = true }
 		raw.stats = raw.stats or { gross = 0, supplies = 0, wages = 0, delivery = 0, other = 0, orders = 0, walkIn = 0 }
-		raw.settings = raw.settings or { guidance = true, effects = true, seenApps = {} }
+		raw.settings = raw.settings or {}
 		raw.reputation = raw.reputation or 0
 		raw.recipes = { classic_chip = true, simple_sugar = true }
 	end
@@ -333,6 +334,10 @@ function DataSchema.sanitize(raw: any): any
 	d.settings.guidance = settings.guidance ~= false
 	d.settings.effects = settings.effects ~= false
 	d.settings.seenApps = boolMap(settings.seenApps)
+	d.settings.textScale = if table.find(Brand.TEXT_SCALES, settings.textScale) then settings.textScale else 1
+	d.settings.sfx = num(settings.sfx, 0.6, 0, 1)
+	d.settings.brandName = Brand.cleanName(settings.brandName) or ""
+	d.settings.brandColor = int(settings.brandColor, 1, 1, #Brand.COLORS)
 	d.deliveries = sanitizeDeliveries(raw.deliveries)
 	d.nextDeliveryId = int(raw.nextDeliveryId, 1, 1, 2 ^ 31)
 	for _, dl in d.deliveries do

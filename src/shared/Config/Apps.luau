@@ -108,6 +108,26 @@ Apps.list = {
 			return data.level >= 2 and data.milestones.firstOrderDone == true
 		end,
 	},
+	{
+		id = "brandstudio",
+		title = "Brand Studio",
+		blurb = "Name your bakery and pick its color.",
+		color = "Coral",
+		unlockHint = "Reach level 3 to unlock Brand Studio.",
+		unlock = function(data)
+			return data.level >= 3
+		end,
+	},
+	{
+		id = "settings",
+		title = "Settings",
+		blurb = "Text size, sound and hints.",
+		color = "Buttercream",
+		unlockHint = "",
+		unlock = function(_data)
+			return true
+		end,
+	},
 } :: { AppDef }
 
 Apps.byId = {} :: { [string]: AppDef }
