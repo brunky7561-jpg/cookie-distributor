@@ -5,6 +5,7 @@ local Config = script.Parent.Parent.Config
 local Equipment = require(Config.Equipment)
 local Ingredients = require(Config.Ingredients)
 local Properties = require(Config.Properties)
+local Staff = require(Config.Staff)
 local Recipes = require(Config.Recipes)
 
 local DataSchema = {}
@@ -26,6 +27,7 @@ function DataSchema.default(): any
 		recipes = { classic_chip = true, simple_sugar = true },
 		recipeBook = {}, -- per recipe: { name, bakes, best, grade, custom }
 		properties = { apartment = true },
+		staff = {}, -- hired bakers: { id, recipeId, bakes, progress, status, unpaid }
 		equipment = { basic_oven = true, mixing_bowl = true, cooling_rack = true },
 		customers = {},
 		nextBatchId = 1,
@@ -104,6 +106,25 @@ local function sanitizeBatch(b: any): any?
 		displayed = b.displayed == true,
 		-- reservedFor is intentionally dropped: open orders are not saved, so no box may stay reserved
 	}
+end
+
+local function sanitizeStaff(v: any): { any }
+	local out = {}
+	if type(v) == "table" then
+		for _, e in v do
+			if type(e) == "table" and type(e.id) == "string" and Staff.candidates[e.id] and #out < 3 then
+				table.insert(out, {
+					id = e.id,
+					recipeId = if type(e.recipeId) == "string" and Recipes.catalog[e.recipeId] then e.recipeId else nil,
+					bakes = int(e.bakes, 0, 0, 1e6),
+					progress = num(e.progress, 0, 0, 1000),
+					status = if type(e.status) == "string" then string.sub(e.status, 1, 90) else "Waiting for a recipe.",
+					unpaid = e.unpaid == true,
+				})
+			end
+		end
+	end
+	return out
 end
 
 local function sanitizeCustomers(v: any): { [string]: any }
@@ -261,7 +282,9 @@ function DataSchema.sanitize(raw: any): any
 	d.recipes.classic_chip = true -- the starter recipes can never be lost
 	d.recipes.simple_sugar = true
 	d.recipeBook = sanitizeRecipeBook(raw.recipeBook)
-	d.properties = boolMap(raw.properties)
+	d.properties = boolMap(raw.properties, function(id)
+		return Properties[id] ~= nil
+	end)
 	d.properties.apartment = true
 	d.equipment = boolMap(raw.equipment, function(id)
 		return Equipment.catalog[id] ~= nil
@@ -286,6 +309,7 @@ function DataSchema.sanitize(raw: any): any
 		d.nextDeliveryId = math.max(d.nextDeliveryId, dl.id + 1)
 	end
 	d.history = sanitizeHistory(raw.history)
+	d.staff = sanitizeStaff(raw.staff)
 	return d
 end
 
