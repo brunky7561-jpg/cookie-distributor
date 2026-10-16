@@ -16,6 +16,10 @@ local Equipment = {}
 
 Equipment.defaults = {
 	bakeSlack = 0, -- seconds around the ideal oven moment that still score 100%
+	mixTaps = 8, -- stirs needed to finish mixing
+	mixMin = 3, -- minimum seconds of mixing the server enforces
+	coolTime = 4, -- seconds the tray must rest
+	maxBatchMult = 1, -- 2 = can bake double batches (12 cookies in the Large box)
 } :: { [string]: number }
 
 Equipment.starter = { "basic_oven", "mixing_bowl", "cooling_rack" }
@@ -39,6 +43,26 @@ Equipment.catalog = {
 		requiresMilestone = "firstOrderDone",
 		description = "Even heat gives you a wider window to pull the tray: forgives about half a second either way.",
 		effects = { bakeSlack = 0.6 },
+	},
+	stand_mixer = {
+		id = "stand_mixer",
+		name = "Stand Mixer",
+		category = "Mixing",
+		tier = 2,
+		price = 220,
+		requiresMilestone = "firstOrderDone",
+		description = "Mixes in half the taps and lets you bake double batches (12 cookies, Large box).",
+		effects = { mixTaps = 4, mixMin = 1.5, maxBatchMult = 2 },
+	},
+	fan_rack = {
+		id = "fan_rack",
+		name = "Fan Cooling Rack",
+		category = "Cooling",
+		tier = 2,
+		price = 120,
+		requiresMilestone = "firstOrderDone",
+		description = "Cools a tray in 2 seconds instead of 4, so you can keep a rhythm going.",
+		effects = { coolTime = 2 },
 	},
 	mixing_bowl = {
 		id = "mixing_bowl",

@@ -253,11 +253,21 @@ function PhoneController:Start()
 		-- announce newly unlocked apps once
 		local state = HUD.state
 		if state then
+			local fresh = {}
 			for _, def in AppsConfig.list do
 				if def.unlock(state) and not seen(def.id) and not announced[def.id] and def.id ~= "crumbchat" and def.id ~= "pantrydash" then
 					announced[def.id] = true
-					say(`New app: {def.title}. {def.blurb}`)
+					table.insert(fresh, def)
 				end
+			end
+			if #fresh == 1 then
+				say(`New app: {fresh[1].title}. {fresh[1].blurb}`)
+			elseif #fresh > 1 then
+				local names = {}
+				for _, def in fresh do
+					table.insert(names, def.title)
+				end
+				say(`New apps: {table.concat(names, ", ")}. Open your phone to explore.`)
 			end
 		end
 		if gui.Enabled then
@@ -293,8 +303,23 @@ function PhoneController:Start()
 		if panel == "PhonePantry" then
 			gui.Enabled = true
 			openApp("pantrydash")
+		elseif panel == "PhoneGear" then
+			gui.Enabled = true
+			if unlocked("gearup") then
+				openApp("gearup")
+			else
+				openApp(nil)
+				say(AppsConfig.byId.gearup.unlockHint)
+			end
 		end
 	end)
+
+	ContextActionService:BindAction("OpenGear", function(_, inputState)
+		if inputState == Enum.UserInputState.Begin then
+			UIBus.Open:Fire("PhoneGear")
+		end
+		return Enum.ContextActionResult.Pass
+	end, false, Enum.KeyCode.B)
 
 	ContextActionService:BindAction("TogglePhone", function(_, inputState)
 		if inputState == Enum.UserInputState.Begin then

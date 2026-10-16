@@ -43,6 +43,26 @@ Apps.list = {
 			return data.milestones.firstOrderDone == true
 		end,
 	},
+	{
+		id = "recipebook",
+		title = "Recipe Book",
+		blurb = "Your recipes, their costs and your best bakes. Experiment at the oven to discover more.",
+		color = "Blueberry",
+		unlockHint = "Deliver your first order to unlock the Recipe Book.",
+		unlock = function(data)
+			return data.milestones.firstOrderDone == true
+		end,
+	},
+	{
+		id = "gearup",
+		title = "GearUp",
+		blurb = "Buy better ovens, mixers and racks.",
+		color = "Butter",
+		unlockHint = "Deliver your first order to unlock GearUp.",
+		unlock = function(data)
+			return data.milestones.firstOrderDone == true
+		end,
+	},
 } :: { AppDef }
 
 Apps.byId = {} :: { [string]: AppDef }

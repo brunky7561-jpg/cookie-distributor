@@ -1,6 +1,8 @@
 --!strict
 -- Server-side baking station. One session per player walks through Mix -> Portion -> Bake -> Cool -> Package.
 -- The server times every step with os.clock; the client only draws bars and can never send a quality score.
+-- Recipes are named combinations of slots (see Config/Recipes). Anything else is an experiment that is saved to the
+-- Recipe Book when it turns out well, and gets better with practice.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -21,9 +23,17 @@ local OrderService = require(script.Parent.OrderService)
 type Stage = "mix" | "portion" | "bake" | "cool" | "package"
 
 type Session = {
-	recipeId: string,
+	recipeId: string, -- catalog id, or "custom:..." for an experiment
+	recipeName: string,
+	custom: boolean,
+	correctness: number, -- 0..1, the recipe factor of the quality score
 	orderId: number?,
 	ingredients: { string },
+	yield: number,
+	batchMult: number,
+	mixTaps: number,
+	mixMin: number,
+	coolTime: number,
 	bakeSlack: number, -- seconds of forgiveness from the oven the session started with
 	stage: Stage,
 	running: boolean, -- true while a timing bar is live (portion, bake)
@@ -38,40 +48,42 @@ local sessions: { [Player]: Session } = {}
 
 local BakingService = {}
 
-local function expand(requires: { [string]: number }): { string }
-	local list = {}
-	for id, n in requires do
-		for _ = 1, n do
-			table.insert(list, id)
-		end
-	end
-	table.sort(list)
-	return list
-end
-
 local function describe(s: Session): any
 	return {
 		stage = s.stage,
 		running = s.running,
 		recipeId = s.recipeId,
+		recipeName = s.recipeName,
 		orderId = s.orderId,
+		yield = s.yield,
+		batchMult = s.batchMult,
+		mixTaps = s.mixTaps,
+		mixMin = s.mixMin,
 		bakeSlack = s.bakeSlack,
 		coolRemaining = math.max(0, s.coolEnd - os.clock()),
 		elapsed = if s.running then os.clock() - s.t0 else 0, -- lets a reopened UI resume its timing bar
 	}
 end
 
+local function customCount(book: { [string]: any }): number
+	local n = 0
+	for _, e in book do
+		if e.custom then
+			n += 1
+		end
+	end
+	return n
+end
+
 local function finish(player: Player, s: Session): (boolean, any)
 	local data = PlayerDataService:Get(player)
-	local recipe = Recipes.catalog[s.recipeId]
 	if not data then
 		return false, "your data is still loading"
 	end
 	sessions[player] = nil
 
-	-- Ingredients have no spoilage yet, and the guided recipe is always followed exactly, so those two factors
-	-- are full marks until freshness (Milestone 2+) and free-form recipes (Milestone 4) exist.
-	local factors: Quality.Factors = { recipe = 1, bake = s.bake, fresh = 1, portion = s.portion }
+	-- Ingredients do not spoil yet, so freshness is full marks until a later milestone gives it meaning.
+	local factors: Quality.Factors = { recipe = s.correctness, bake = s.bake, fresh = 1, portion = s.portion }
 	local score = Quality.score(factors)
 	local quality = score / 100
 	local appeal = AppealCalc.compute(s.ingredients, quality)
@@ -88,26 +100,51 @@ local function finish(player: Player, s: Session): (boolean, any)
 	end
 	table.sort(tags)
 
+	local grade = Quality.grade(score)
+	local feedback = Quality.feedback(factors, s.bakeSigned)
+	if s.custom and s.correctness < 0.9 and feedback == "Golden edges and even sizes. A perfect little batch." then
+		feedback = "A promising experiment. Bake it again to refine the recipe."
+	end
 	local batch = {
 		id = InventoryService:NextBatchId(player),
-		name = recipe.name,
-		recipeId = recipe.id,
+		name = s.recipeName,
+		recipeId = s.recipeId,
 		ingredients = s.ingredients,
 		tags = tags,
 		quality = quality,
 		score = score,
-		grade = Quality.grade(score),
-		feedback = Quality.feedback(factors, s.bakeSigned),
+		grade = grade,
+		feedback = feedback,
 		factors = factors,
 		appeal = appeal.score,
 		effects = appeal.effects,
-		count = recipe.yield,
+		count = s.yield,
 		packaged = true,
 	}
 	InventoryService:AddBatch(player, batch)
 
-	if not data.recipes[recipe.id] then
-		data.recipes[recipe.id] = true
+	-- Recipe Book: practice, best score, and discoveries
+	local entry = data.recipeBook[s.recipeId]
+	local keepCustom = s.custom and (entry ~= nil or (score >= 50 and customCount(data.recipeBook) < Recipes.MAX_CUSTOM))
+	if not s.custom or keepCustom then
+		if not entry then
+			entry = { name = s.recipeName, bakes = 0, best = 0, grade = "", custom = s.custom }
+			data.recipeBook[s.recipeId] = entry
+		end
+		entry.bakes += 1
+		if score >= entry.best then
+			entry.best = score
+			entry.grade = grade
+		end
+	end
+	local newlyKnown = not s.custom and not data.recipes[s.recipeId]
+	if not s.custom then
+		data.recipes[s.recipeId] = true
+	end
+	if newlyKnown then
+		Remotes.event("Notify"):FireClient(player, `Discovery! You worked out {s.recipeName}. It's in your Recipe Book now.`)
+		EconomyService:AddXp(player, 40)
+	elseif entry and entry.bakes == 1 then
 		EconomyService:AddXp(player, 25) -- first time baking this recipe
 	end
 	EconomyService:AddXp(player, math.floor(5 + quality * 15))
@@ -117,7 +154,7 @@ local function finish(player: Player, s: Session): (boolean, any)
 		linked = OrderService:MarkReady(player, s.orderId, batch.id)
 	end
 	PlayerDataService:Replicate(player)
-	return true, { batch = batch, linkedOrder = linked, orderId = s.orderId }
+	return true, { batch = batch, linkedOrder = linked, orderId = s.orderId, discovered = newlyKnown, custom = s.custom }
 end
 
 function BakingService:Init()
@@ -126,7 +163,7 @@ function BakingService:Init()
 		return if s then describe(s) else nil
 	end
 
-	Remotes.func("BakeStart").OnServerInvoke = function(player: Player, recipeId: any, orderId: any)
+	Remotes.func("BakeStart").OnServerInvoke = function(player: Player, recipeId: any, orderId: any, options: any): (boolean, any)
 		if not RateLimit.check(player, "BakeStart", 0.5) then
 			return false, "slow down a little"
 		end
@@ -137,10 +174,51 @@ function BakingService:Init()
 		if sessions[player] then
 			return false, "you already have a bake in progress"
 		end
-		local recipe = Recipes.catalog[recipeId]
-		if not recipe then
-			return false, "unknown recipe"
+		local opts: { [string]: any } = if type(options) == "table" then options else {}
+		local effects = EquipmentService:Effects(player)
+
+		local mult = opts.batchMult
+		if mult == nil then
+			mult = 1
 		end
+		if mult ~= 1 and mult ~= 2 then
+			return false, "pick a single or a double batch"
+		end
+		if mult > effects.maxBatchMult then
+			return false, "you need a Stand Mixer to bake double batches"
+		end
+
+		-- work out which recipe this is
+		local recipe: any
+		local custom = false
+		if recipeId == "experiment" then
+			local slots, err = Recipes.validateSlots(opts.slots)
+			if not slots then
+				return false, err
+			end
+			recipe = Recipes.matchCatalog(slots)
+			if not recipe then
+				custom = true
+				local key = "custom:" .. Recipes.keyFor(slots)
+				recipe = {
+					id = key,
+					name = Recipes.customName(slots),
+					requires = Recipes.requiresFor(slots),
+				}
+				if not data.recipeBook[key] and customCount(data.recipeBook) >= Recipes.MAX_CUSTOM then
+					return false, "Your Recipe Book has no room for more experiments."
+				end
+			end
+		else
+			recipe = Recipes.catalog[recipeId]
+			if not recipe then
+				return false, "unknown recipe"
+			end
+			if not data.recipes[recipeId] then
+				return false, "you have not unlocked that recipe yet"
+			end
+		end
+
 		if not InteractionService:IsNearStation(player, "BakeStation") then
 			return false, "walk up to your kitchen counter or oven first"
 		end
@@ -148,25 +226,43 @@ function BakingService:Init()
 			return false, "storage is full, deliver or use some cookies first"
 		end
 		if orderId ~= nil then
-			if type(orderId) ~= "number" or not OrderService:CanProduce(player, orderId, recipeId) then
+			if type(orderId) ~= "number" or not OrderService:CanProduce(player, orderId, recipe.id, custom) then
 				return false, "that order cannot be baked for right now"
 			end
 		end
-		local missing = InventoryService:Missing(player, recipe.requires)
+		local need: { [string]: number } = {}
+		for id, n in recipe.requires do
+			need[id] = n * mult
+		end
+		local missing = InventoryService:Missing(player, need)
 		if missing then
 			return false, `Not enough ingredients: {missing}. Order more with PantryDash on your phone (P).`
 		end
 
 		-- Everything is validated above and nothing yields below, so these steps cannot be interrupted.
-		InventoryService:Consume(player, recipe.requires)
+		InventoryService:Consume(player, need)
 		if orderId ~= nil then
-			OrderService:BeginProduction(player, orderId :: number)
+			OrderService:BeginProduction(player, orderId)
+		end
+		local book = data.recipeBook[recipe.id]
+		local correctness = 1
+		if custom then
+			local bakes = if book then book.bakes else 0
+			correctness = Recipes.CUSTOM_CORRECTNESS[math.min(bakes + 1, #Recipes.CUSTOM_CORRECTNESS)]
 		end
 		local s: Session = {
-			recipeId = recipeId,
-			orderId = orderId :: number?,
-			ingredients = expand(recipe.requires),
-			bakeSlack = EquipmentService:Effects(player).bakeSlack,
+			recipeId = recipe.id,
+			recipeName = recipe.name,
+			custom = custom,
+			correctness = correctness,
+			orderId = orderId,
+			ingredients = Recipes.expand(recipe.requires, mult),
+			yield = Recipes.YIELD * mult,
+			batchMult = mult,
+			mixTaps = effects.mixTaps,
+			mixMin = effects.mixMin,
+			coolTime = effects.coolTime,
+			bakeSlack = effects.bakeSlack,
 			stage = "mix",
 			running = false,
 			t0 = os.clock(),
@@ -179,7 +275,7 @@ function BakingService:Init()
 		return true, describe(s)
 	end
 
-	Remotes.func("BakeStep").OnServerInvoke = function(player: Player, action: any, arg: any)
+	Remotes.func("BakeStep").OnServerInvoke = function(player: Player, action: any, arg: any): (boolean, any)
 		if not RateLimit.check(player, "BakeStep", 0.15) then
 			return false, "slow down a little"
 		end
@@ -190,7 +286,7 @@ function BakingService:Init()
 		local now = os.clock()
 
 		if action == "mixDone" and s.stage == "mix" then
-			if now - s.t0 < Baking.MIX_MIN then
+			if now - s.t0 < s.mixMin then
 				return false, "keep stirring a little longer"
 			end
 			s.stage = "portion"
@@ -217,7 +313,7 @@ function BakingService:Init()
 			s.bakeSigned = elapsed - Baking.BAKE_IDEAL
 			s.stage = "cool"
 			s.running = false
-			s.coolEnd = now + Baking.COOL_TIME
+			s.coolEnd = now + s.coolTime
 			local info = describe(s)
 			info.bakeScore = s.bake
 			return true, info
@@ -228,7 +324,6 @@ function BakingService:Init()
 			s.stage = "package"
 			return true, describe(s)
 		elseif action == "pack" and s.stage == "package" then
-			local recipe = Recipes.catalog[s.recipeId]
 			local box
 			for _, b in Recipes.boxes do
 				if b.id == arg then
@@ -238,8 +333,8 @@ function BakingService:Init()
 			if not box then
 				return false, "pick a box"
 			end
-			if box.size ~= recipe.yield then
-				return false, `That box holds {box.size}; this tray has {recipe.yield} cookies.`
+			if box.size ~= s.yield then
+				return false, `That box holds {box.size}; this tray has {s.yield} cookies.`
 			end
 			return finish(player, s)
 		end
