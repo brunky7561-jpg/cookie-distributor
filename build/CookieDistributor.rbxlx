@@ -6575,6 +6575,14 @@ function HUD:Start()
 	gui.ResetOnSpawn = false
 	gui.IgnoreGuiInset = false
 	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+	-- stay hidden behind the title screen; show once it is closed (or after 90 s, so a broken intro can never hide the HUD)
+	gui.Enabled = not UIBus.introActive
+	UIBus.IntroDone.Event:Connect(function()
+		gui.Enabled = true
+	end)
+	task.delay(90, function()
+		gui.Enabled = true
+	end)
 
 	local top = card(gui, UDim2.fromOffset(300, 96), UDim2.new(0, 12, 0, 12))
 	local stats = label(top, "Loading...", 22, UDim2.fromOffset(12, 6), UDim2.new(1, -24, 0, 28))
@@ -6750,6 +6758,7 @@ local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
 local Theme = require(ReplicatedStorage.Shared.Config.Theme)
 local UI = require(script.Parent.Parent.Modules.UI)
 local HUD = require(script.Parent.HUDController)
+local UIBus = require(script.Parent.UIBus)
 
 local IntroController = {}
 
@@ -6815,6 +6824,8 @@ function IntroController:Start()
 		end
 		blur:Destroy()
 		gui:Destroy()
+		UIBus.introActive = false
+		UIBus.IntroDone:Fire() -- the HUD and the welcome card appear now
 	end
 
 	-- cutscene ----------------------------------------------------------------
@@ -7299,6 +7310,9 @@ function PhoneController:Start()
 	end)
 
 	local function toggle()
+		if UIBus.introActive and not gui.Enabled then
+			return -- the title screen is still up
+		end
 		gui.Enabled = not gui.Enabled
 		if gui.Enabled then
 			render()
@@ -7405,9 +7419,12 @@ return SoundController
 -- Tiny in-client event hub so controllers never require each other.
 --   UIBus.Toggle:Fire("Phone")           toggles a panel (HUD button, keyboard shortcut)
 --   UIBus.Open:Fire("Bake" | "PhonePantry" | "PhoneGear")  opens a panel (server-accepted interaction, deep links)
+--   UIBus.introActive                    true while the title screen / cutscene is up; the HUD stays hidden until it ends
 local UIBus = {
 	Toggle = Instance.new("BindableEvent"),
 	Open = Instance.new("BindableEvent"),
+	IntroDone = Instance.new("BindableEvent"),
+	introActive = true,
 }
 
 return UIBus
@@ -7422,6 +7439,7 @@ local Properties = require(ReplicatedStorage.Shared.Config.Properties)
 local Theme = require(ReplicatedStorage.Shared.Config.Theme)
 local UI = require(script.Parent.Parent.Modules.UI)
 local HUD = require(script.Parent.HUDController)
+local UIBus = require(script.Parent.UIBus)
 
 local WorldFxController = {}
 
@@ -7593,7 +7611,14 @@ function WorldFxController:Start()
 	folder = f
 	HUD:OnState(refresh)
 	refresh()
-	task.delay(1.5, welcome)
+	-- the welcome card waits for the title screen / cutscene to finish
+	if UIBus.introActive then
+		UIBus.IntroDone.Event:Connect(function()
+			task.delay(0.5, welcome)
+		end)
+	else
+		task.delay(1.5, welcome)
+	end
 end
 
 return WorldFxController

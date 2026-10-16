@@ -129,6 +129,14 @@ function HUD:Start()
 	gui.ResetOnSpawn = false
 	gui.IgnoreGuiInset = false
 	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+	-- stay hidden behind the title screen; show once it is closed (or after 90 s, so a broken intro can never hide the HUD)
+	gui.Enabled = not UIBus.introActive
+	UIBus.IntroDone.Event:Connect(function()
+		gui.Enabled = true
+	end)
+	task.delay(90, function()
+		gui.Enabled = true
+	end)
 
 	local top = card(gui, UDim2.fromOffset(300, 96), UDim2.new(0, 12, 0, 12))
 	local stats = label(top, "Loading...", 22, UDim2.fromOffset(12, 6), UDim2.new(1, -24, 0, 28))

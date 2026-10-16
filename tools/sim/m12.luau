@@ -170,6 +170,10 @@ do
 	-- 1. HUD
 	local hud = guiNamed("HUD")
 	expect(hud ~= nil, "HUD gui exists")
+	expect(hud.Enabled == false, "the HUD stays hidden behind the title screen")
+	local UIBusMod = clientRequire(modNodes["Controllers.UIBus"])
+	expect(UIBusMod.introActive == true, "the intro is marked active while the title is up")
+	UIBusMod.introActive = false -- the next checks exercise the phone as if the title were closed
 	expect(findText(hud, "$") ~= nil, "HUD shows cash")
 	local phoneBtn, gearBtn, bakeBtn = findText(hud, "📱 Phone"), findText(hud, "🔧 Gear"), findText(hud, "🍪 Bake")
 	expect(phoneBtn and gearBtn and bakeBtn, "HUD has Phone, Gear and Bake buttons")
@@ -191,6 +195,10 @@ do
 	expect(phoneGui.Enabled == false, "Phone button closes the phone again")
 	actions.TogglePhone(nil, "Begin")
 	expect(phoneGui.Enabled == true, "P key opens the phone")
+	actions.TogglePhone(nil, "Begin")
+	UIBusMod.introActive = true
+	actions.TogglePhone(nil, "Begin")
+	expect(phoneGui.Enabled == false, "P does nothing while the title screen is up")
 	actions.TogglePhone(nil, "Begin")
 
 	-- 4. Real InteractionService: prompt + Bake shortcut
@@ -311,6 +319,7 @@ do
 	expect(accepted, "choosing to bake accepts the first order")
 	click(findText(intro, "Start baking!"))
 	expect(guiNamed("Intro") == nil, "Start baking closes the cutscene")
+	expect(hud.Enabled == true and UIBusMod.introActive == false, "the HUD appears once the intro is finished")
 	expect(select(1, call(P, "IntroChoice", "bake")) == false, "the choice cannot be made twice")
 
 	-- punishment path on a fresh save, and no cutscene on later joins

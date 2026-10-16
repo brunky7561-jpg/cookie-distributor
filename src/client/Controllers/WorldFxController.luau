@@ -9,6 +9,7 @@ local Properties = require(ReplicatedStorage.Shared.Config.Properties)
 local Theme = require(ReplicatedStorage.Shared.Config.Theme)
 local UI = require(script.Parent.Parent.Modules.UI)
 local HUD = require(script.Parent.HUDController)
+local UIBus = require(script.Parent.UIBus)
 
 local WorldFxController = {}
 
@@ -180,7 +181,14 @@ function WorldFxController:Start()
 	folder = f
 	HUD:OnState(refresh)
 	refresh()
-	task.delay(1.5, welcome)
+	-- the welcome card waits for the title screen / cutscene to finish
+	if UIBus.introActive then
+		UIBus.IntroDone.Event:Connect(function()
+			task.delay(0.5, welcome)
+		end)
+	else
+		task.delay(1.5, welcome)
+	end
 end
 
 return WorldFxController

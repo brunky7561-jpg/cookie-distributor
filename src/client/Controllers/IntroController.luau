@@ -11,6 +11,7 @@ local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
 local Theme = require(ReplicatedStorage.Shared.Config.Theme)
 local UI = require(script.Parent.Parent.Modules.UI)
 local HUD = require(script.Parent.HUDController)
+local UIBus = require(script.Parent.UIBus)
 
 local IntroController = {}
 
@@ -76,6 +77,8 @@ function IntroController:Start()
 		end
 		blur:Destroy()
 		gui:Destroy()
+		UIBus.introActive = false
+		UIBus.IntroDone:Fire() -- the HUD and the welcome card appear now
 	end
 
 	-- cutscene ----------------------------------------------------------------
