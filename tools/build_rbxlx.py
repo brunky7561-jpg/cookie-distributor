@@ -4,11 +4,13 @@
 Open the result in Roblox Studio (File > Open from File). No Rojo needed.
 Usage: python3 tools/build_rbxlx.py
 """
-import base64
 import itertools
 import os
 import sys
 from xml.sax.saxutils import escape
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import map_gen  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
@@ -68,41 +70,12 @@ def build_dir(path: str, name: str) -> str:
     return item("Folder", name, "", children)
 
 
-def part(cls: str, name: str, pos, size, color: int, tags=()) -> str:
-    x, y, z = pos
-    sx, sy, sz = size
-    props = (
-        '<bool name="Anchored">true</bool>'
-        f'<CoordinateFrame name="CFrame"><X>{x}</X><Y>{y}</Y><Z>{z}</Z>'
-        "<R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22>"
-        "</CoordinateFrame>"
-        f'<Vector3 name="size"><X>{sx}</X><Y>{sy}</Y><Z>{sz}</Z></Vector3>'
-        f'<Color3uint8 name="Color3uint8">{color}</Color3uint8>'
-    )
-    if tags:
-        encoded = base64.b64encode("\0".join(tags).encode()).decode()
-        props += f'<BinaryString name="Tags">{encoded}</BinaryString>'
-    return item(cls, name, props)
-
-
-def rgb(r: int, g: int, b: int) -> int:
-    return 0xFF000000 | (r << 16) | (g << 8) | b
-
-
 def main() -> None:
     shared = build_dir(os.path.join(SRC, "shared"), "Shared")
     server = build_dir(os.path.join(SRC, "server"), "Server")
     client = build_dir(os.path.join(SRC, "client"), "Client")
 
-    workspace = item(
-        "Workspace",
-        "Workspace",
-        "",
-        part("Part", "Baseplate", (0, -10, 0), (512, 20, 512), rgb(99, 95, 98))
-        + part("SpawnLocation", "SpawnLocation", (0, 0.5, 0), (12, 1, 12), rgb(163, 162, 165))
-        # A simple counter to bake at. Replace with your own kitchen model and tag it "BakeStation".
-        + part("Part", "KitchenCounter", (0, 2, -14), (12, 4, 4), rgb(196, 140, 90), tags=("BakeStation",)),
-    )
+    workspace = item("Workspace", "Workspace", "", "".join(map_gen.build_world()))
     xml = (
         '<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" '
         'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
