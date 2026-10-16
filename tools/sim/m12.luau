@@ -249,4 +249,15 @@ do
 		settle()
 	end
 	expect(reached, "a full bake can be finished with the on-screen buttons")
+
+	-- 6. the client asks for its state before the save has loaded (this left the HUD stuck on "Loading...")
+	local late = newPlayer(9200, "Early")
+	local got = "pending"
+	table.insert(players, late) -- present in the server, profile not loaded yet
+	task.spawn(function() got = call(late, "GetState") end)
+	expect(got == "pending", "GetState waits while the save is still loading")
+	table.remove(players)
+	join(late)
+	settle()
+	expect(type(got) == "table" and got.cash ~= nil, "GetState answers once the save has loaded")
 end

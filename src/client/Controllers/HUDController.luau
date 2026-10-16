@@ -235,20 +235,29 @@ function HUD:Start()
 
 	Remotes.event("OrdersUpdated").OnClientEvent:Connect(applyOrders)
 	Remotes.event("StateUpdated").OnClientEvent:Connect(apply)
-	task.spawn(function()
+	-- the first call can come back empty if the save is still loading, so keep asking until it arrives
+	local function fetchOrders()
 		local okOrders, list = pcall(function()
 			return Remotes.func("GetOrders"):InvokeServer()
 		end)
 		if okOrders and list then
 			applyOrders(list)
 		end
-	end)
-	local ok, state = pcall(function()
-		return Remotes.func("GetState"):InvokeServer()
-	end)
-	if ok and state then
-		apply(state)
 	end
+	task.spawn(function()
+		for _ = 1, 40 do
+			local ok, state = pcall(function()
+				return Remotes.func("GetState"):InvokeServer()
+			end)
+			if ok and state then
+				apply(state)
+				fetchOrders()
+				return
+			end
+			task.wait(1)
+		end
+		stats.Text = "Could not load your save. Rejoin the game."
+	end)
 end
 
 return HUD

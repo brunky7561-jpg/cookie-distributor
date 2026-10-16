@@ -154,6 +154,12 @@ end
 
 function PlayerDataService:Init()
 	Remotes.func("GetState").OnServerInvoke = function(player: Player)
+		-- the client asks as soon as it starts, often before the save has finished loading: wait for it
+		local waited = 0
+		while not profiles[player] and player.Parent and waited < 20 do
+			task.wait(0.25)
+			waited += 0.25
+		end
 		return profiles[player]
 	end
 
