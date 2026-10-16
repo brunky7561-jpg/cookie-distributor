@@ -38,7 +38,7 @@ function HUD:Start()
 
 	local function apply(state: any)
 		HUD.state = state
-		label.Text = `$ {math.floor(state.cash)}   Lv {state.level}\n[B] Shop  [K] Bake`
+		label.Text = `$ {math.floor(state.cash)}   Lv {state.level}\n[B] Shop  [K] Bake  [P] Phone`
 		for _, fn in listeners do
 			task.spawn(fn, state)
 		end
