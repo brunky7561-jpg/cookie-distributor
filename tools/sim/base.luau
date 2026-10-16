@@ -1,3 +1,4 @@
+math.randomseed(20241016) -- deterministic runs
 -- Fake Roblox environment for running the server services with the real Luau interpreter.
 -- Scenarios (m*.luau) are appended after this file and run in order. Each is wrapped in do ... end.
 local clock = 1000

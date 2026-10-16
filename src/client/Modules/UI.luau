@@ -21,7 +21,32 @@ function UI.stroke(inst: Instance, thickness: number?)
 	local s = Instance.new("UIStroke")
 	s.Color = Theme.Cocoa
 	s.Thickness = thickness or 2
+	s.Transparency = 0.15
+	s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	s.Parent = inst
+end
+
+-- A soft vertical gradient from `top` to `bottom` (defaults to a lighter and a slightly deeper shade of the fill).
+function UI.gradient(inst: GuiObject, top: Color3?, bottom: Color3?)
+	local base = inst.BackgroundColor3
+	local g = Instance.new("UIGradient")
+	g.Rotation = 90
+	g.Color = ColorSequence.new(top or base:Lerp(Color3.new(1, 1, 1), 0.35), bottom or base:Lerp(Color3.new(0, 0, 0), 0.08))
+	g.Parent = inst
+end
+
+-- Small rounded badge, e.g. "NEW".
+function UI.pill(parent: Instance, text: string, color: Color3?): TextLabel
+	local l = Instance.new("TextLabel")
+	l.AutomaticSize = Enum.AutomaticSize.XY
+	l.BackgroundColor3 = color or Theme.Cherry
+	l.TextColor3 = Theme.Cream
+	l.Font = Enum.Font.GothamBlack
+	l.TextSize = 11
+	l.Text = " " .. text .. " "
+	l.Parent = parent
+	UI.corner(l, 8)
+	return l
 end
 
 function UI.padding(inst: Instance, px: number)
@@ -84,8 +109,9 @@ function UI.button(parent: Instance, text: string, color: Color3?, onClick: (() 
 	b.Text = text
 	b.AutoButtonColor = true
 	b.Parent = parent
-	UI.corner(b)
+	UI.corner(b, 12)
 	UI.stroke(b, 1.5)
+	UI.gradient(b)
 	if onClick then
 		b.Activated:Connect(onClick)
 	end
@@ -100,10 +126,11 @@ function UI.card(parent: Instance, color: Color3?): Frame
 	f.BackgroundColor3 = color or Theme.Buttercream
 	f.BorderSizePixel = 0
 	f.Parent = parent
-	UI.corner(f)
+	UI.corner(f, 14)
 	UI.stroke(f, 1.5)
-	UI.padding(f, 8)
-	UI.list(f, 4)
+	UI.gradient(f, (color or Theme.Buttercream):Lerp(Theme.Cream, 0.6), color or Theme.Buttercream)
+	UI.padding(f, 10)
+	UI.list(f, 5)
 	return f
 end
 

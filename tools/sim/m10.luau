@@ -35,7 +35,7 @@ do -- Milestone 10: release readiness
 	local junk = { nil, 0, -1, 1e308, 0 / 0, "", "x", string.rep("a", 5000), true, false, {}, { 1, 2, 3 }, { flour = 1e9 }, { [1] = {} }, math.huge, -math.huge }
 	local calls, errors = 0, 0
 	for name, remote in R do
-		if remote.OnServerInvoke and name ~= "DevReset" then
+		if remote.OnServerInvoke and name ~= "DevReset" and name ~= "DevBoost" then
 			for i = 1, #junk + 1 do
 				for j = 1, #junk + 1, 5 do
 					clock += 5

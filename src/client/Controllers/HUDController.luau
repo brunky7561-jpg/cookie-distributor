@@ -63,12 +63,17 @@ local function card(parent: Instance, size: UDim2, position: UDim2): Frame
 	f.BorderSizePixel = 0
 	f.Parent = parent
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 12)
+	corner.CornerRadius = UDim.new(0, 16)
 	corner.Parent = f
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Theme.Cocoa
 	stroke.Thickness = 2
+	stroke.Transparency = 0.1
 	stroke.Parent = f
+	local grad = Instance.new("UIGradient")
+	grad.Rotation = 90
+	grad.Color = ColorSequence.new(Theme.Cream, Theme.Peach)
+	grad.Parent = f
 	return f
 end
 
@@ -100,12 +105,16 @@ local function actionButton(parent: Instance, text: string, color: Color3, pos: 
 	b.AutoButtonColor = true
 	b.Parent = parent
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 14)
+	corner.CornerRadius = UDim.new(0, 18)
 	corner.Parent = b
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Theme.Cocoa
-	stroke.Thickness = 2
+	stroke.Thickness = 2.5
 	stroke.Parent = b
+	local grad = Instance.new("UIGradient")
+	grad.Rotation = 90
+	grad.Color = ColorSequence.new(color:Lerp(Color3.new(1, 1, 1), 0.4), color)
+	grad.Parent = b
 	b.Activated:Connect(onClick)
 	return b
 end
@@ -156,12 +165,21 @@ function HUD:Start()
 		reset.Activated:Connect(function()
 			Remotes.func("DevReset"):InvokeServer()
 		end)
+		local boost = reset:Clone()
+		boost.Position = UDim2.new(0, 12, 1, -50)
+		boost.Size = UDim2.fromOffset(190, 32)
+		boost.BackgroundColor3 = Theme.Mint
+		boost.Text = "Dev: unlock everything"
+		boost.Parent = gui
+		boost.Activated:Connect(function()
+			Remotes.func("DevBoost"):InvokeServer()
+		end)
 	end
 
-	actionButton(gui, "Phone", Theme.Coral, UDim2.new(1, -12, 1, -12), function()
+	actionButton(gui, "📱 Phone", Theme.Coral, UDim2.new(1, -12, 1, -12), function()
 		UIBus.Toggle:Fire("Phone")
 	end)
-	actionButton(gui, "Gear", Theme.Butter, UDim2.new(1, -144, 1, -12), function()
+	actionButton(gui, "🔧 Gear", Theme.Butter, UDim2.new(1, -144, 1, -12), function()
 		UIBus.Open:Fire("PhoneGear")
 	end)
 
@@ -193,7 +211,7 @@ function HUD:Start()
 
 	local function apply(state: any)
 		HUD.state = state
-		stats.Text = `$ {math.floor(state.cash)}    Lv {state.level}`
+		stats.Text = `💰 ${math.floor(state.cash)}     ⭐ Lv {state.level}`
 		refreshObjective()
 		for _, fn in listeners do
 			task.spawn(fn, state)
