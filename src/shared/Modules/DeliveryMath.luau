@@ -3,6 +3,7 @@
 local Config = script.Parent.Parent.Config
 local Ingredients = require(Config.Ingredients)
 local Properties = require(Config.Properties)
+local Vehicles = require(Config.Vehicles)
 
 local DeliveryMath = {}
 
@@ -14,6 +15,11 @@ DeliveryMath.MAX_UNITS_PER_ORDER = 60
 DeliveryMath.MAX_PENDING = 5
 DeliveryMath.RARE_UNLOCK_LEVEL = 5
 
+function DeliveryMath.eta(vehicles: { [string]: boolean }?): number
+	local mult = Vehicles.deliveryPerks(vehicles or {})
+	return math.max(4, math.floor(DeliveryMath.ETA * mult + 0.5))
+end
+
 function DeliveryMath.subtotal(items: { [string]: number }): number
 	local total = 0
 	for id, n in items do
@@ -22,8 +28,9 @@ function DeliveryMath.subtotal(items: { [string]: number }): number
 	return total
 end
 
-function DeliveryMath.fee(subtotal: number): number
-	if subtotal <= 0 or subtotal >= DeliveryMath.FREE_DELIVERY_FROM then
+function DeliveryMath.fee(subtotal: number, vehicles: { [string]: boolean }?): number
+	local _, free = Vehicles.deliveryPerks(vehicles or {})
+	if free or subtotal <= 0 or subtotal >= DeliveryMath.FREE_DELIVERY_FROM then
 		return 0
 	end
 	return DeliveryMath.FEE
@@ -139,7 +146,7 @@ function DeliveryMath.quote(data: any, items: { [string]: number }, propertyId: 
 		return nil, `Not enough storage: this would make {unitsAfter} items but you can hold {capacity}.`
 	end
 	local subtotal = DeliveryMath.subtotal(items)
-	local fee = DeliveryMath.fee(subtotal)
+	local fee = DeliveryMath.fee(subtotal, data.vehicles)
 	local total = subtotal + fee
 	if data.cash < total then
 		return nil, `You need ${total} but have ${math.floor(data.cash)}.`
@@ -150,7 +157,7 @@ function DeliveryMath.quote(data: any, items: { [string]: number }, propertyId: 
 		subtotal = subtotal,
 		fee = fee,
 		total = total,
-		eta = DeliveryMath.ETA,
+		eta = DeliveryMath.eta(data.vehicles),
 		cashAfter = data.cash - total,
 		unitsAfter = unitsAfter,
 		capacity = capacity,

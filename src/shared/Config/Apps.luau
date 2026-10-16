@@ -88,6 +88,16 @@ Apps.list = {
 			return false
 		end,
 	},
+	{
+		id = "wheelhouse",
+		title = "Wheelhouse",
+		blurb = "Buy a car or van: faster ingredient deliveries and a way to cruise the city.",
+		color = "Coral",
+		unlockHint = "Reach level 4 to unlock the Wheelhouse.",
+		unlock = function(data)
+			return data.level >= 4
+		end,
+	},
 } :: { AppDef }
 
 Apps.byId = {} :: { [string]: AppDef }

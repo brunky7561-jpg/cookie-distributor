@@ -107,7 +107,7 @@ local services = {
 	ReplicatedStorage = RS, Players = Players,
 	DataStoreService = { GetDataStore = function() return store end },
 	CollectionService = { GetTagged = function(_, tag) return config.tagged[tag] or {} end },
-	RunService = { IsServer = function() return true end, IsStudio = function() return config.studio end },
+	RunService = { Heartbeat = { Connect = function() end }, IsServer = function() return true end, IsStudio = function() return config.studio end },
 }
 game = { GetService = function(self, n) return services[n] or error("no service " .. n) end, JobId = "job", BindToClose = function() end }
 

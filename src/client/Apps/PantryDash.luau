@@ -103,9 +103,9 @@ function PantryDash.render(ctx: any)
 	end
 	local subtotal = DeliveryMath.subtotal(clean)
 	UI.label(box, `Subtotal: ${subtotal}`)
-	UI.label(box, `Delivery fee: ${DeliveryMath.fee(subtotal)}`)
-	UI.label(box, `Total: ${subtotal + DeliveryMath.fee(subtotal)}   |   Cash now: ${math.floor(state.cash)}`, { bold = true })
-	UI.label(box, `Arrives in about {DeliveryMath.ETA} seconds at your delivery mat.`, { size = 13 })
+	UI.label(box, `Delivery fee: ${DeliveryMath.fee(subtotal, state.vehicles)}`)
+	UI.label(box, `Total: ${subtotal + DeliveryMath.fee(subtotal, state.vehicles)}   |   Cash now: ${math.floor(state.cash)}`, { bold = true })
+	UI.label(box, `Arrives in about {DeliveryMath.eta(state.vehicles)} seconds at your delivery mat.`, { size = 13 })
 	local quote, err = DeliveryMath.quote(state, clean, destination)
 	if not quote then
 		UI.label(box, tostring(err), { bold = true, color = Theme.Coral })
