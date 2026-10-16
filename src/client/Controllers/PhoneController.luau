@@ -81,8 +81,13 @@ function PhoneController:Start()
 	frame.BackgroundColor3 = Theme.Buttercream
 	frame.BorderSizePixel = 0
 	frame.Parent = gui
-	UI.corner(frame, 18)
-	UI.stroke(frame, 3)
+	UI.corner(frame, 24)
+	UI.stroke(frame, 5)
+	UI.gradient(frame, Theme.Cream, Theme.Peach)
+	local frameStroke = frame:FindFirstChildOfClass("UIStroke")
+	if frameStroke then
+		frameStroke.Color = Theme.Night
+	end
 	local limits = Instance.new("UISizeConstraint")
 	limits.MinSize = Vector2.new(300, 360)
 	limits.MaxSize = Vector2.new(430, 640)
@@ -90,10 +95,11 @@ function PhoneController:Start()
 
 	local header = Instance.new("Frame")
 	header.Size = UDim2.new(1, 0, 0, 52)
-	header.BackgroundColor3 = Theme.Cocoa
+	header.BackgroundColor3 = Theme.Night
 	header.BorderSizePixel = 0
 	header.Parent = frame
-	UI.corner(header, 18)
+	UI.corner(header, 20)
+	UI.gradient(header, Theme.Cocoa, Theme.Night)
 
 	local backBtn = Instance.new("TextButton")
 	backBtn.Size = UDim2.fromOffset(44, 44)
@@ -210,7 +216,7 @@ function PhoneController:Start()
 		grid.BackgroundTransparency = 1
 		grid.Parent = content
 		local layout = Instance.new("UIGridLayout")
-		layout.CellSize = UDim2.new(0.5, -6, 0, 96)
+		layout.CellSize = UDim2.new(0.5, -6, 0, 104)
 		layout.CellPadding = UDim2.fromOffset(8, 8)
 		layout.SortOrder = Enum.SortOrder.LayoutOrder
 		layout.Parent = grid
@@ -218,17 +224,37 @@ function PhoneController:Start()
 			local on = unlocked(def.id) and apps[def.id] ~= nil
 			local b = Instance.new("TextButton")
 			b.LayoutOrder = i
-			b.BackgroundColor3 = if on then Theme[def.color] else Color3.fromRGB(200, 192, 176)
-			b.TextColor3 = Theme.Cocoa
-			b.Font = Enum.Font.GothamBold
-			b.TextSize = 16
-			b.TextWrapped = true
-			local badge = if on and not seen(def.id) then "\nNEW" else ""
-			b.Text = if on then def.title .. badge else def.title .. "\n(locked)"
+			b.BackgroundColor3 = if on then Theme[def.color] else Color3.fromRGB(205, 198, 184)
+			b.Text = ""
 			b.AutoButtonColor = on
 			b.Parent = grid
-			UI.corner(b, 14)
+			UI.corner(b, 18)
 			UI.stroke(b, 2)
+			UI.gradient(b)
+			local icon = Instance.new("TextLabel")
+			icon.BackgroundTransparency = 1
+			icon.Size = UDim2.new(1, 0, 0, 46)
+			icon.Position = UDim2.fromOffset(0, 8)
+			icon.Font = Enum.Font.GothamBold
+			icon.TextSize = 36
+			icon.Text = if on then def.icon else "🔒"
+			icon.TextTransparency = if on then 0 else 0.35
+			icon.Parent = b
+			local name = Instance.new("TextLabel")
+			name.BackgroundTransparency = 1
+			name.Size = UDim2.new(1, -8, 0, 30)
+			name.Position = UDim2.new(0, 4, 1, -34)
+			name.Font = Enum.Font.GothamBold
+			name.TextSize = 14
+			name.TextColor3 = Theme.Cocoa
+			name.TextWrapped = true
+			name.Text = def.title
+			name.Parent = b
+			if on and not seen(def.id) then
+				local badge = UI.pill(b, "NEW")
+				badge.Position = UDim2.new(1, -8, 0, 6)
+				badge.AnchorPoint = Vector2.new(1, 0)
+			end
 			b.Activated:Connect(function()
 				if on then
 					openApp(def.id)

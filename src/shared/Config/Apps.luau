@@ -3,6 +3,7 @@
 -- server uses the same list to validate app ids. Apps unlock gradually; new ones announce themselves once.
 export type AppDef = {
 	id: string,
+	icon: string,
 	title: string,
 	blurb: string, -- one-line explanation shown when the app unlocks
 	color: string, -- Theme token name
@@ -15,6 +16,7 @@ local Apps = {}
 Apps.list = {
 	{
 		id = "crumbchat",
+		icon = "💬",
 		title = "CrumbChat",
 		blurb = "Customer requests: accept orders, ask questions and track delivery.",
 		color = "Coral",
@@ -25,6 +27,7 @@ Apps.list = {
 	},
 	{
 		id = "pantrydash",
+		icon = "🛒",
 		title = "PantryDash",
 		blurb = "Order ingredients and have them delivered to your property.",
 		color = "Butter",
@@ -35,6 +38,7 @@ Apps.list = {
 	},
 	{
 		id = "ledger",
+		icon = "📒",
 		title = "Ledger",
 		blurb = "See income, costs and profit.",
 		color = "Mint",
@@ -45,6 +49,7 @@ Apps.list = {
 	},
 	{
 		id = "recipebook",
+		icon = "📖",
 		title = "Recipe Book",
 		blurb = "Your recipes, their costs and your best bakes. Experiment at the oven to discover more.",
 		color = "Blueberry",
@@ -55,6 +60,7 @@ Apps.list = {
 	},
 	{
 		id = "gearup",
+		icon = "🔧",
 		title = "GearUp",
 		blurb = "Buy better ovens, mixers and racks.",
 		color = "Butter",
@@ -65,6 +71,7 @@ Apps.list = {
 	},
 	{
 		id = "propertydesk",
+		icon = "🏠",
 		title = "Property Desk",
 		blurb = "Buy a food truck or shop, then sell to walk-in customers from a display case.",
 		color = "Mint",
@@ -75,6 +82,7 @@ Apps.list = {
 	},
 	{
 		id = "staffboard",
+		icon = "🧑‍🍳",
 		title = "Staff Board",
 		blurb = "Hire bakers to bake your recipes while you handle orders.",
 		color = "Blueberry",
@@ -90,6 +98,7 @@ Apps.list = {
 	},
 	{
 		id = "wheelhouse",
+		icon = "🚗",
 		title = "Wheelhouse",
 		blurb = "Buy a car or van: faster ingredient deliveries and a way to cruise the city.",
 		color = "Coral",
@@ -100,6 +109,7 @@ Apps.list = {
 	},
 	{
 		id = "marketpulse",
+		icon = "📈",
 		title = "Market Pulse",
 		blurb = "Daily market events, rival contracts and the leaderboard.",
 		color = "Blueberry",
@@ -110,6 +120,7 @@ Apps.list = {
 	},
 	{
 		id = "brandstudio",
+		icon = "🎨",
 		title = "Brand Studio",
 		blurb = "Name your bakery and pick its color.",
 		color = "Coral",
@@ -120,6 +131,7 @@ Apps.list = {
 	},
 	{
 		id = "settings",
+		icon = "⚙️",
 		title = "Settings",
 		blurb = "Text size, sound and hints.",
 		color = "Buttercream",

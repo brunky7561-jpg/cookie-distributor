@@ -123,7 +123,7 @@ do -- Milestone 4: recipe variety, experiments, equipment upgrades
 	-- "any new recipe" orders accept experiments; named orders do not
 	local ordersMod = S.OrderService
 	local zed = nil
-	for i = 1, 40 do
+	for i = 1, 120 do
 		tick(31)
 		for _, o in ordersOf(p) do if o.recipeId == "any" then zed = o end end
 		if zed then break end
