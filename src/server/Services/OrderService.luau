@@ -387,6 +387,22 @@ function OrderService:MarkReady(player: Player, orderId: number, batchId: number
 	return true
 end
 
+-- Accepts the oldest order that is still waiting (used by the opening cutscene). Returns true if one was accepted.
+function OrderService:AcceptFirstAvailable(player: Player): boolean
+	local first: Order? = nil
+	for _, o in activeFor(player) do
+		if o.state == "Available" and (not first or o.id < first.id) then
+			first = o
+		end
+	end
+	if not first then
+		return false
+	end
+	first.state = "Accepted"
+	push(player)
+	return true
+end
+
 function OrderService:Init()
 	Remotes.func("GetOrders").OnServerInvoke = function(player: Player)
 		local list: { any } = {}

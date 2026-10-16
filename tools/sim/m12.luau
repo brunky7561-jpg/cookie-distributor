@@ -146,7 +146,7 @@ do
 	for _, c in ctrls do if c.Start then task.spawn(function() c:Start() end) end end
 	daemonMode = false
 	settle()
-	expect(#ctrls == 7, "client starts 7 controllers")
+	expect(#ctrls == 8, "client starts 8 controllers")
 	expect(#warns == 0, "client printed no warnings: " .. table.concat(warns, " | "))
 
 	-- helpers
@@ -284,4 +284,41 @@ do
 	expect(#missing == 0, "client remotes are all pre-declared: " .. table.concat(missing, ", "))
 	RemotesMod.declareAll()
 	expect(R.GetState ~= nil and R.Notify ~= nil and R.BakeStatus ~= nil, "declareAll creates the remotes")
+
+	-- 9. title screen and first-join cutscene
+	local intro = guiNamed("Intro")
+	expect(intro ~= nil, "title screen is shown on load")
+	expect(findText(intro, "Cookie Empire") ~= nil, "title screen shows the game name")
+	click(findText(intro, "Play"))
+	expect(findText(intro, "Madame Vex") ~= nil, "first join: the cutscene starts after Play")
+	local seen = 0
+	for _ = 1, 30 do
+		if findText(intro, "Take the punishment") then break end
+		local nxt = findText(intro, "Next") or findText(intro, "Skip typing")
+		if not nxt then break end
+		clock += 1
+		click(nxt)
+		seen += 1
+	end
+	expect(findText(intro, "Take the punishment") ~= nil and findText(intro, "Bake cookies for her") ~= nil, "the cutscene ends with two choices")
+	local firstOrder = T.ordersOf(P)[1]
+	click(findText(intro, "Bake cookies for her"))
+	expect(T.state(P).milestones.introDone == true and T.state(P).milestones.introBake == true, "the bake choice is saved")
+	local accepted = false
+	for _, o in T.ordersOf(P) do if o.state == "Accepted" then accepted = true end end
+	expect(accepted, "choosing to bake accepts the first order")
+	click(findText(intro, "Start baking!"))
+	expect(guiNamed("Intro") == nil, "Start baking closes the cutscene")
+	expect(select(1, call(P, "IntroChoice", "bake")) == false, "the choice cannot be made twice")
+
+	-- punishment path on a fresh save, and no cutscene on later joins
+	local Q = newPlayer(9400, "Punished")
+	join(Q)
+	local cashBefore = T.state(Q).cash
+	local ok2 = call(Q, "IntroChoice", "punish")
+	expect(ok2 == true and T.state(Q).cash == cashBefore - 50, "the punishment costs $50")
+	local stillAvailable = false
+	for _, o in T.ordersOf(Q) do if o.state == "Available" then stillAvailable = true end end
+	expect(stillAvailable, "after the punishment the first order is still waiting")
+	expect(select(1, call(Q, "IntroChoice", "nonsense")) == false, "an invalid choice is refused")
 end

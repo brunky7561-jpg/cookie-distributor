@@ -32,11 +32,11 @@ local function get(name: string, className: string): Instance
 		return r
 	end
 	local found = f:WaitForChild(name, 10)
-	if not found then
-		warn(`[Remotes] the server never created "{name}"; things that need it will not work`)
-		found = f:WaitForChild(name)
+	if found then
+		return found
 	end
-	return found
+	warn(`[Remotes] the server never created "{name}"; things that need it will not work`)
+	return f:WaitForChild(name)
 end
 
 -- Every remote the client uses. The server creates them all up front, so a client script can never end up
@@ -44,7 +44,7 @@ end
 Remotes.CLIENT_EVENTS = { "InteractionAccepted", "Notify", "OrdersUpdated", "StateUpdated" }
 Remotes.CLIENT_FUNCS = {
 	"BakeStart", "BakeStatus", "BakeStep", "BrandSet", "BuyEquipment", "ContractDeliver", "DevBoost", "DevReset", "DisplaySet",
-	"GetOrders", "GetState", "GoToKitchen", "MarketStatus", "OrderAction", "PantryOrder", "PropertyBuy", "SeenApp", "SettingSet",
+	"GetOrders", "GetState", "GoToKitchen", "IntroChoice", "MarketStatus", "OrderAction", "PantryOrder", "PropertyBuy", "SeenApp", "SettingSet",
 	"StaffAssign", "StaffFire", "StaffHire", "VehicleBuy", "VehicleRemove", "VehicleSpawn",
 }
 
