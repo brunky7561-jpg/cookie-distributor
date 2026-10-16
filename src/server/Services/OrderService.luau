@@ -18,7 +18,8 @@ local TICK = 5 -- seconds between expiry checks
 local SPAWN_EVERY = 30 -- seconds between new random orders per player
 local MAX_ACTIVE_ORDERS = 3
 local ORDER_LIFETIME = 600 -- seconds; random orders only, the first order never expires
-local RECIPE_ID = "classic_chip"
+local FIRST_RECIPE = "classic_chip"
+local ANY = "any" -- an order for "something new" accepts any recipe, including experiments
 local DESTINATION = "Starter Apartment doorstep"
 local REL_LEVELS: { { points: number, name: string } } = {
 	{ points = 0, name = "Stranger" },
@@ -29,13 +30,13 @@ local REL_LEVELS: { { points: number, name: string } } = {
 }
 
 local ORDER_TEXT: { [string]: string } = {
-	Neighbor = "Hi neighbor! I'm hosting book club. Could you bake {count} Classic Chip cookies for us?",
-	Foodie = "Hi! I'd love {count} really well-made cookies. Quality matters to me.",
-	BargainHunter = "Hey, got a deal on {count} cookies? Nothing fancy.",
-	SweetTooth = "I NEED {count} cookies. The sweeter the better!",
-	HealthNut = "Could I get {count} not-too-sweet cookies? Thanks!",
-	Trendsetter = "Make me {count} cookies nobody has tried yet!",
-	Grump = "{count} cookies. Don't disappoint me.",
+	Neighbor = "Hi neighbor! I'm hosting book club. Could you bake {count} {recipe} for us?",
+	Foodie = "Hi! I'd love {count} {recipe}. Quality matters to me.",
+	BargainHunter = "Hey, got a deal on {count} {recipe}? Nothing fancy.",
+	SweetTooth = "I NEED {count} {recipe}. The sweeter the better!",
+	HealthNut = "Could I get {count} {recipe}? Not too sweet, thanks!",
+	Trendsetter = "Make me {count} cookies nobody has tried yet! Surprise me.",
+	Grump = "{count} {recipe}. Don't disappoint me.",
 }
 
 local REACTIONS = {
@@ -99,14 +100,16 @@ end
 local function view(order: Order): any
 	local t = templatesById[order.customerId]
 	local recipe = Recipes.catalog[order.recipeId]
+	local recipeName = if recipe then recipe.name else "any new recipe"
+	local text = (ORDER_TEXT[t.personality] :: string):gsub("{count}", tostring(order.count)):gsub("{recipe}", recipeName)
 	return {
 		id = order.id,
 		customerName = t.name,
 		personality = t.personality,
-		text = (ORDER_TEXT[t.personality] :: string):gsub("{count}", tostring(order.count)),
+		text = text,
 		count = order.count,
 		recipeId = order.recipeId,
-		recipeName = recipe.name,
+		recipeName = recipeName,
 		offer = order.offer,
 		state = order.state,
 		deadline = order.deadline,
@@ -131,13 +134,36 @@ local function notify(player: Player, text: string)
 	Remotes.event("Notify"):FireClient(player, text)
 end
 
+local function pickRecipe(player: Player, t: any, isFirst: boolean): string
+	if isFirst then
+		return FIRST_RECIPE
+	end
+	if t.personality == "Trendsetter" then
+		return ANY
+	end
+	local data = PlayerDataService:Get(player)
+	local pool = {}
+	if data then
+		for id in data.recipes do
+			if Recipes.catalog[id] then
+				table.insert(pool, id)
+			end
+		end
+	end
+	table.sort(pool)
+	return if #pool > 0 then pool[math.random(#pool)] else FIRST_RECIPE
+end
+
 local function newOrder(player: Player, t: any, count: number, isFirst: boolean)
+	local recipeId = pickRecipe(player, t, isFirst)
+	local recipe = Recipes.catalog[recipeId]
+	local mult = if recipe then recipe.priceMult or 1 else 1.3 -- novelty pays a little extra
 	local order: Order = {
 		id = nextOrderId,
 		customerId = t.id,
-		recipeId = RECIPE_ID,
+		recipeId = recipeId,
 		count = count,
-		offer = math.floor(count * t.budget / 6 + 0.5) + 3,
+		offer = math.floor((count * t.budget / 6 + 3) * mult + 0.5),
 		state = "Available",
 		deadline = if isFirst then nil else os.time() + ORDER_LIFETIME,
 		destination = DESTINATION,
@@ -328,9 +354,9 @@ end
 
 -- Called by BakingService --------------------------------------------------------------------------------
 
-function OrderService:CanProduce(player: Player, orderId: number, recipeId: string): boolean
+function OrderService:CanProduce(player: Player, orderId: number, recipeId: string, _custom: boolean?): boolean
 	local order = getOrder(player, orderId)
-	return order ~= nil and order.state == "Accepted" and order.recipeId == recipeId
+	return order ~= nil and order.state == "Accepted" and (order.recipeId == ANY or order.recipeId == recipeId)
 end
 
 function OrderService:BeginProduction(player: Player, orderId: number): boolean
@@ -410,7 +436,7 @@ function OrderService:Init()
 				return false, "pick a box"
 			end
 			local batch = InventoryService:FindBatch(player, extra)
-			if not batch or batch.reservedFor or batch.recipeId ~= order.recipeId then
+			if not batch or batch.reservedFor or (order.recipeId ~= ANY and batch.recipeId ~= order.recipeId) then
 				return false, "that box does not match this order"
 			end
 			if batch.count < order.count then

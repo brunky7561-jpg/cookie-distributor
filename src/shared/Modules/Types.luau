@@ -34,6 +34,9 @@ export type RecipeDef = {
 	yield: number,
 	slots: { [string]: string },
 	requires: { [string]: number },
+	unlockLevel: number?, -- level at which the recipe is added to the Recipe Book
+	priceMult: number?, -- how much more (or less) customers pay for it
+	blurb: string?,
 }
 
 export type BoxDef = {

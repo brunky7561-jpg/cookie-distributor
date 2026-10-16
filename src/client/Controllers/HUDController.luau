@@ -1,5 +1,5 @@
 --!strict
--- Always-visible HUD: cash and level, the current objective, and on-screen Phone / Shop buttons (touch friendly).
+-- Always-visible HUD: cash and level, the current objective, and on-screen Phone / Gear buttons (touch friendly).
 -- Also keeps the latest server state for other controllers (HUD:OnState).
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -162,7 +162,7 @@ function HUD:Start()
 		UIBus.Toggle:Fire("Phone")
 	end)
 	actionButton(gui, "Gear", Theme.Butter, UDim2.new(1, -144, 1, -12), function()
-		UIBus.Toggle:Fire("Shop")
+		UIBus.Open:Fire("PhoneGear")
 	end)
 
 	local function refreshObjective()

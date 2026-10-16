@@ -178,4 +178,16 @@ function T.bake(p, orderId, box)
 	clock += 4.5; call(p, "BakeStep", "coolDone"); clock += 0.5
 	return call(p, "BakeStep", "pack", box or "standard")
 end
+-- Like T.bake but with a recipe id, options and timing overrides: { late = seconds past ideal bake, cool = seconds to wait }
+function T.bake2(p, recipeId, orderId, options, box, o)
+	o = o or {}
+	local ok, info = call(p, "BakeStart", recipeId, orderId, options)
+	if not ok then return false, info end
+	clock += (info.mixMin or 3) + 0.5; call(p, "BakeStep", "mixDone"); clock += 0.5
+	call(p, "BakeStep", "portionStart"); clock += 3; call(p, "BakeStep", "portionStop"); clock += 0.5
+	call(p, "BakeStep", "ovenStart"); clock += 6 + (o.late or 0); call(p, "BakeStep", "ovenPull"); clock += 0.5
+	clock += o.cool or 4.6; local cok = call(p, "BakeStep", "coolDone"); clock += 0.5
+	if not cok then return false, "cooling" end
+	return call(p, "BakeStep", "pack", box or "standard")
+end
 T.state, T.ordersOf = state, ordersOf

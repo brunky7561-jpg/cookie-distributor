@@ -5,6 +5,7 @@ local Config = script.Parent.Parent.Config
 local Equipment = require(Config.Equipment)
 local Ingredients = require(Config.Ingredients)
 local Properties = require(Config.Properties)
+local Recipes = require(Config.Recipes)
 
 local DataSchema = {}
 
@@ -22,7 +23,8 @@ function DataSchema.default(): any
 		reputation = 0,
 		ingredients = { flour = 6, white_sugar = 4, butter = 4, chocolate_chips = 3 }, -- one small batch plus spare
 		batches = {},
-		recipes = { classic_chip = true },
+		recipes = { classic_chip = true, simple_sugar = true },
+		recipeBook = {}, -- per recipe: { name, bakes, best, grade, custom }
 		properties = { apartment = true },
 		equipment = { basic_oven = true, mixing_bowl = true, cooling_rack = true },
 		customers = {},
@@ -171,6 +173,31 @@ local function sanitizeHistory(v: any): { any }
 	return out
 end
 
+local function sanitizeRecipeBook(v: any): { [string]: any }
+	local out: { [string]: any } = {}
+	local customs = 0
+	if type(v) == "table" then
+		for key, e in v do
+			if type(key) == "string" and type(e) == "table" then
+				local custom = Recipes.parseCustomKey(key) ~= nil
+				if (Recipes.catalog[key] ~= nil or custom) and (not custom or customs < Recipes.MAX_CUSTOM) then
+					if custom then
+						customs += 1
+					end
+					out[key] = {
+						name = if type(e.name) == "string" then string.sub(e.name, 1, 60) else key,
+						bakes = int(e.bakes, 0, 0, 100000),
+						best = int(e.best, 0, 0, 100),
+						grade = if type(e.grade) == "string" then string.sub(e.grade, 1, 20) else "",
+						custom = custom,
+					}
+				end
+			end
+		end
+	end
+	return out
+end
+
 -- Brings data from any older version up to VERSION. Unknown future versions are not handled here.
 function DataSchema.migrate(raw: any): any
 	if type(raw) ~= "table" then
@@ -183,7 +210,7 @@ function DataSchema.migrate(raw: any): any
 		raw.stats = raw.stats or { gross = 0, supplies = 0, wages = 0, delivery = 0, other = 0, orders = 0 }
 		raw.settings = raw.settings or { guidance = true, effects = true, seenApps = {} }
 		raw.reputation = raw.reputation or 0
-		raw.recipes = { classic_chip = true }
+		raw.recipes = { classic_chip = true, simple_sugar = true }
 	end
 	raw.schemaVersion = DataSchema.VERSION
 	return raw
@@ -227,8 +254,12 @@ function DataSchema.sanitize(raw: any): any
 	end
 	d.batches = batches
 
-	d.recipes = boolMap(raw.recipes)
-	d.recipes.classic_chip = true -- the starter recipe can never be lost
+	d.recipes = boolMap(raw.recipes, function(id)
+		return Recipes.catalog[id] ~= nil
+	end)
+	d.recipes.classic_chip = true -- the starter recipes can never be lost
+	d.recipes.simple_sugar = true
+	d.recipeBook = sanitizeRecipeBook(raw.recipeBook)
 	d.properties = boolMap(raw.properties)
 	d.properties.apartment = true
 	d.equipment = boolMap(raw.equipment, function(id)

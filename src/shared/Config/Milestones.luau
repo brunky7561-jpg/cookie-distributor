@@ -30,7 +30,7 @@ Milestones.list = {
 	{
 		id = "firstUpgrade",
 		title = "Buy the Convection Oven",
-		hint = "Tap Gear (or press B) and choose the Convection Oven.",
+		hint = "Open GearUp on your phone (or press B) and buy the Convection Oven.",
 		done = function(data)
 			return data.equipment.convection_oven == true
 		end,

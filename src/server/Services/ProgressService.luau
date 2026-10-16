@@ -53,6 +53,14 @@ function ProgressService:Check(player: Player)
 		end
 	end
 
+	for id, recipe in Recipes.catalog do
+		if not data.recipes[id] and (recipe.unlockLevel or 1) <= data.level then
+			data.recipes[id] = true
+			changed = true
+			Remotes.event("Notify"):FireClient(player, `New recipe unlocked: {recipe.name}`)
+		end
+	end
+
 	if data.cash <= RECOVERY_CASH_LIMIT and #data.batches == 0 and not canBakeSomething(data) then
 		local now = os.clock()
 		if now - (lastKit[player] or -math.huge) >= RECOVERY_COOLDOWN then
