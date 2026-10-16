@@ -162,6 +162,10 @@ local function welcome()
 	limit.MaxSize = Vector2.new(460, 9999)
 	limit.Parent = frame
 
+	local x = UI.button(frame, "X  Close", Theme.Coral, function()
+		gui:Destroy()
+	end)
+	x.LayoutOrder = -1
 	UI.label(frame, "🍪 Cookie Empire", { bold = true, size = 28, align = Enum.TextXAlignment.Center })
 	UI.label(frame, "Bake, deliver, grow.", { size = 16, align = Enum.TextXAlignment.Center })
 	UI.label(frame, "📱 Your phone (P) holds everything: orders, ingredients, recipes and more apps that unlock as you grow.", { size = 15 })

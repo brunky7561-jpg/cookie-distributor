@@ -5963,6 +5963,24 @@ function BakingController:Start()
 	limits.MaxSize = Vector2.new(430, 640)
 	limits.Parent = frame
 
+	-- always-visible exit; a bake in progress is kept by the server and resumes when the kitchen is opened again
+	local exit = Instance.new("TextButton")
+	exit.Name = "Exit"
+	exit.AnchorPoint = Vector2.new(1, 0)
+	exit.Position = UDim2.new(1, -8, 0, 8)
+	exit.Size = UDim2.fromOffset(40, 40)
+	exit.BackgroundColor3 = Theme.Coral
+	exit.TextColor3 = Theme.Cream
+	exit.Font = Enum.Font.FredokaOne
+	exit.TextSize = 22
+	exit.Text = "X"
+	exit.ZIndex = 20
+	exit.Parent = frame
+	UI.corner(exit, 20)
+	exit.Activated:Connect(function()
+		gui.Enabled = false
+	end)
+
 	local content = Instance.new("ScrollingFrame")
 	content.Size = UDim2.fromScale(1, 1)
 	content.BackgroundTransparency = 1
@@ -6838,6 +6856,20 @@ function IntroController:Start()
 		local stage = fullFrame(gui, Theme.Night)
 		stage.BackgroundTransparency = 0.35 -- the blurred plaza keeps turning behind the dialogue
 
+		local skip = Instance.new("TextButton")
+		skip.AnchorPoint = Vector2.new(1, 0)
+		skip.Position = UDim2.new(1, -16, 0, 16)
+		skip.Size = UDim2.fromOffset(150, 40)
+		skip.BackgroundColor3 = Theme.Coral
+		skip.TextColor3 = Theme.Cream
+		skip.Font = Enum.Font.FredokaOne
+		skip.TextSize = 18
+		skip.Text = "X  Skip intro"
+		skip.ZIndex = 30
+		skip.Parent = stage
+		UI.corner(skip, 20)
+		skip.Activated:Connect(close) -- leaves the choice for the next time the save joins
+
 		for _, top in { true, false } do
 			local bar = Instance.new("Frame")
 			bar.Size = UDim2.new(1, 0, 0.1, 0)
@@ -7592,6 +7624,10 @@ local function welcome()
 	limit.MaxSize = Vector2.new(460, 9999)
 	limit.Parent = frame
 
+	local x = UI.button(frame, "X  Close", Theme.Coral, function()
+		gui:Destroy()
+	end)
+	x.LayoutOrder = -1
 	UI.label(frame, "🍪 Cookie Empire", { bold = true, size = 28, align = Enum.TextXAlignment.Center })
 	UI.label(frame, "Bake, deliver, grow.", { size = 16, align = Enum.TextXAlignment.Center })
 	UI.label(frame, "📱 Your phone (P) holds everything: orders, ingredients, recipes and more apps that unlock as you grow.", { size = 15 })

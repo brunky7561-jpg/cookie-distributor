@@ -44,6 +44,24 @@ function BakingController:Start()
 	limits.MaxSize = Vector2.new(430, 640)
 	limits.Parent = frame
 
+	-- always-visible exit; a bake in progress is kept by the server and resumes when the kitchen is opened again
+	local exit = Instance.new("TextButton")
+	exit.Name = "Exit"
+	exit.AnchorPoint = Vector2.new(1, 0)
+	exit.Position = UDim2.new(1, -8, 0, 8)
+	exit.Size = UDim2.fromOffset(40, 40)
+	exit.BackgroundColor3 = Theme.Coral
+	exit.TextColor3 = Theme.Cream
+	exit.Font = Enum.Font.FredokaOne
+	exit.TextSize = 22
+	exit.Text = "X"
+	exit.ZIndex = 20
+	exit.Parent = frame
+	UI.corner(exit, 20)
+	exit.Activated:Connect(function()
+		gui.Enabled = false
+	end)
+
 	local content = Instance.new("ScrollingFrame")
 	content.Size = UDim2.fromScale(1, 1)
 	content.BackgroundTransparency = 1

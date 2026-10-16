@@ -229,6 +229,12 @@ do
 	expect(findText(bakeGui, "Start baking") ~= nil, "kitchen shows a Start baking button")
 	click(findText(bakeGui, "Close"))
 	expect(bakeGui.Enabled == false, "kitchen closes")
+	-- the kitchen can be left from any screen with the X in the corner
+	clock += 2
+	click(bakeBtn)
+	expect(bakeGui.Enabled == true, "kitchen reopens")
+	click(find(bakeGui, function(o) return rawget(o, "Name") == "Exit" end))
+	expect(bakeGui.Enabled == false, "the X in the corner closes the kitchen")
 	-- standing at the counter, pressing E opens the kitchen too
 	root.Position = Vector3.new(-39, 3, -77)
 	clock += 1
@@ -252,7 +258,7 @@ do
 		if findText(bakeGui, "Bake another batch") then reached = true break end
 		local pick = nil
 		for _, b in buttons do if b.Text:find("Standard") then pick = b end end
-		for _, b in buttons do if not pick and b.Text ~= "Close" then pick = b break end end
+		for _, b in buttons do if not pick and b.Text ~= "Close" and b.Text ~= "X" then pick = b break end end
 		if not pick then break end
 		clock += 3.2
 		click(pick)
@@ -301,6 +307,7 @@ do
 	expect(findText(intro, "Cookie Empire") ~= nil, "title screen shows the game name")
 	click(findText(intro, "Play"))
 	expect(findText(intro, "Madame Vex") ~= nil, "first join: the cutscene starts after Play")
+	expect(findText(intro, "Skip intro") ~= nil, "the cutscene has a Skip intro button")
 	local seen = 0
 	for _ = 1, 30 do
 		if findText(intro, "Take the punishment") then break end

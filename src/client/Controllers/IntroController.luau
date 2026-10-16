@@ -91,6 +91,20 @@ function IntroController:Start()
 		local stage = fullFrame(gui, Theme.Night)
 		stage.BackgroundTransparency = 0.35 -- the blurred plaza keeps turning behind the dialogue
 
+		local skip = Instance.new("TextButton")
+		skip.AnchorPoint = Vector2.new(1, 0)
+		skip.Position = UDim2.new(1, -16, 0, 16)
+		skip.Size = UDim2.fromOffset(150, 40)
+		skip.BackgroundColor3 = Theme.Coral
+		skip.TextColor3 = Theme.Cream
+		skip.Font = Enum.Font.FredokaOne
+		skip.TextSize = 18
+		skip.Text = "X  Skip intro"
+		skip.ZIndex = 30
+		skip.Parent = stage
+		UI.corner(skip, 20)
+		skip.Activated:Connect(close) -- leaves the choice for the next time the save joins
+
 		for _, top in { true, false } do
 			local bar = Instance.new("Frame")
 			bar.Size = UDim2.new(1, 0, 0.1, 0)
