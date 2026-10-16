@@ -91,7 +91,7 @@ end
 
 function InventoryService:Reserve(player: Player, batchId: number, orderId: number): boolean
 	local batch = InventoryService:FindBatch(player, batchId)
-	if not batch or batch.reservedFor then
+	if not batch or batch.reservedFor or batch.displayed then
 		return false
 	end
 	batch.reservedFor = orderId

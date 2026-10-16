@@ -63,6 +63,16 @@ Apps.list = {
 			return data.milestones.firstOrderDone == true
 		end,
 	},
+	{
+		id = "propertydesk",
+		title = "Property Desk",
+		blurb = "Buy a food truck or shop, then sell to walk-in customers from a display case.",
+		color = "Mint",
+		unlockHint = "Reach level 3 to unlock the Property Desk.",
+		unlock = function(data)
+			return data.level >= 3 or data.milestones.firstOrderDone == true and data.cash >= 1500
+		end,
+	},
 } :: { AppDef }
 
 Apps.byId = {} :: { [string]: AppDef }

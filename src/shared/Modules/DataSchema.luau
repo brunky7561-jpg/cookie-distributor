@@ -30,7 +30,7 @@ function DataSchema.default(): any
 		customers = {},
 		nextBatchId = 1,
 		milestones = {},
-		stats = { gross = 0, supplies = 0, wages = 0, delivery = 0, other = 0, orders = 0 },
+		stats = { gross = 0, supplies = 0, wages = 0, delivery = 0, other = 0, orders = 0, walkIn = 0 },
 		deliveries = {}, -- paid PantryDash orders not yet collected: { id, items, propertyId, arriveAt }
 		nextDeliveryId = 1,
 		history = {}, -- last completed orders for the phone
@@ -101,6 +101,7 @@ local function sanitizeBatch(b: any): any?
 		effects = stringList(b.effects, 10),
 		count = count,
 		packaged = b.packaged == true,
+		displayed = b.displayed == true,
 		-- reservedFor is intentionally dropped: open orders are not saved, so no box may stay reserved
 	}
 end
@@ -207,7 +208,7 @@ function DataSchema.migrate(raw: any): any
 	if from < 2 then
 		-- v1 (milestones 0 and 1): no equipment, stats, settings or reputation; recipe names instead of ids
 		raw.equipment = raw.equipment or { basic_oven = true, mixing_bowl = true, cooling_rack = true }
-		raw.stats = raw.stats or { gross = 0, supplies = 0, wages = 0, delivery = 0, other = 0, orders = 0 }
+		raw.stats = raw.stats or { gross = 0, supplies = 0, wages = 0, delivery = 0, other = 0, orders = 0, walkIn = 0 }
 		raw.settings = raw.settings or { guidance = true, effects = true, seenApps = {} }
 		raw.reputation = raw.reputation or 0
 		raw.recipes = { classic_chip = true, simple_sugar = true }
