@@ -154,7 +154,7 @@ function BakingService:Init()
 		end
 		local missing = InventoryService:Missing(player, recipe.requires)
 		if missing then
-			return false, `Not enough ingredients: {missing}. Open the Shop (B) to buy more.`
+			return false, `Not enough ingredients: {missing}. Order more with PantryDash on your phone (P).`
 		end
 
 		-- Everything is validated above and nothing yields below, so these steps cannot be interrupted.

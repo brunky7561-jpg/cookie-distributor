@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local CustomerTemplates = require(ReplicatedStorage.Shared.Config.Customers)
+local Dialogue = require(ReplicatedStorage.Shared.Config.Dialogue)
 local Recipes = require(ReplicatedStorage.Shared.Config.Recipes)
 local RateLimit = require(ReplicatedStorage.Shared.Modules.RateLimit)
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
@@ -236,6 +237,32 @@ local function penalize(player: Player, order: Order)
 	end
 end
 
+-- Curated answers to the preset questions. `questionId` must be one of Dialogue.questions.
+local function answer(order: Order, questionId: any): string?
+	local t = templatesById[order.customerId]
+	if questionId == "flavor" then
+		local words = {}
+		for _, tag in t.loves do
+			table.insert(words, Dialogue.tagWords[tag] or tag)
+		end
+		if #words == 0 then
+			return "Surprise me! I like most things."
+		end
+		return `I'm really into {table.concat(words, " and ")}.`
+	elseif questionId == "deadline" then
+		if order.deadline then
+			local minutes = math.max(1, math.ceil((order.deadline - os.time()) / 60))
+			return `About {minutes} minute{if minutes == 1 then "" else "s"} from now would be great.`
+		end
+		return "No rush at all. Whenever you're ready!"
+	elseif questionId == "where" then
+		return `Bring them to the {order.destination}, please.`
+	elseif questionId == "budget" then
+		return `I can pay around ${order.offer}, more if they're really good.`
+	end
+	return nil
+end
+
 local function deliver(player: Player, order: Order): (boolean, any)
 	local data = PlayerDataService:Get(player)
 	if not data or order.state ~= "Ready" or not order.batchId then
@@ -275,6 +302,11 @@ local function deliver(player: Player, order: Order): (boolean, any)
 	end
 	local wasFirst = not data.milestones.firstOrderDone
 	data.milestones.firstOrderDone = true
+
+	table.insert(data.history, 1, { customer = t.name, recipe = batch.name, pay = pay + tip, grade = batch.grade or "", t = os.time() })
+	while #data.history > 10 do
+		table.remove(data.history)
+	end
 
 	local pool = if sat > 0.75 then REACTIONS.great elseif sat > 0.45 then REACTIONS.ok else REACTIONS.bad
 	PlayerDataService:Replicate(player)
@@ -393,6 +425,12 @@ function OrderService:Init()
 			return true, "Box set aside. Deliver it when you're ready."
 		elseif action == "deliver" then
 			return deliver(player, order)
+		elseif action == "ask" then
+			local reply = answer(order, extra)
+			if not reply then
+				return false, "unknown question"
+			end
+			return true, reply
 		end
 		return false, "unknown action"
 	end

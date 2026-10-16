@@ -382,7 +382,11 @@ function BakingController:Start()
 		end
 
 		if missingAny then
-			label("You are short on ingredients. Open the Shop (B) to buy more.", 40, true, Theme.Coral)
+			label("You are short on ingredients. Order more with PantryDash on your phone.", 40, true, Theme.Coral)
+			button("Open PantryDash", Theme.Blueberry).Activated:Once(function()
+				gui.Enabled = false
+				UIBus.Open:Fire("PhonePantry")
+			end)
 		end
 		local go = button("Start baking", Theme.Coral)
 		go.Activated:Once(function()
