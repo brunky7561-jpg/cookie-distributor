@@ -107,6 +107,7 @@ local services = {
 	ReplicatedStorage = RS, Players = Players,
 	DataStoreService = { GetDataStore = function() return store end },
 	CollectionService = { GetTagged = function(_, tag) return config.tagged[tag] or {} end },
+	TextService = { FilterStringAsync = function(_, text) if config.filterFail then error('filter down') end local out = text if string.find(string.lower(text), 'badword') then out = string.rep('#', #text) end return { GetNonChatStringForBroadcastAsync = function() return out end } end },
 	RunService = { Heartbeat = { Connect = function() end }, IsServer = function() return true end, IsStudio = function() return config.studio end },
 }
 game = { GetService = function(self, n) return services[n] or error("no service " .. n) end, JobId = "job", BindToClose = function() end }

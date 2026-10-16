@@ -178,6 +178,7 @@ function PhoneController:Start()
 	function render()
 		UI.clear(content)
 		local state = HUD.state
+		UI.textScale = if state and state.settings and state.settings.textScale then state.settings.textScale else 1
 		backBtn.Visible = current ~= nil
 		cashLabel.Text = if state then UI.money(state.cash) else ""
 		if not state then
@@ -201,7 +202,8 @@ function PhoneController:Start()
 		end
 		current = nil
 		backBtn.Visible = false
-		titleLabel.Text = "Phone"
+		local brand = if state.settings.brandName ~= "" then state.settings.brandName else "Phone"
+		titleLabel.Text = brand
 		local grid = Instance.new("Frame")
 		grid.Size = UDim2.new(1, 0, 0, 0)
 		grid.AutomaticSize = Enum.AutomaticSize.Y
@@ -255,7 +257,7 @@ function PhoneController:Start()
 		if state then
 			local fresh = {}
 			for _, def in AppsConfig.list do
-				if def.unlock(state) and not seen(def.id) and not announced[def.id] and def.id ~= "crumbchat" and def.id ~= "pantrydash" then
+				if def.unlock(state) and not seen(def.id) and not announced[def.id] and def.id ~= "crumbchat" and def.id ~= "pantrydash" and def.id ~= "settings" then
 					announced[def.id] = true
 					table.insert(fresh, def)
 				end

@@ -9,6 +9,7 @@ local UI = {}
 
 UI.Theme = Theme
 UI.MIN_TOUCH = 44
+UI.textScale = 1 -- accessibility: set from the player's saved settings before each render
 
 function UI.corner(inst: Instance, radius: number?)
 	local c = Instance.new("UICorner")
@@ -59,7 +60,7 @@ function UI.label(parent: Instance, text: string, opts: LabelOpts?): TextLabel
 	l.BackgroundTransparency = 1
 	l.TextColor3 = o.color or Theme.Cocoa
 	l.Font = if o.bold then Enum.Font.GothamBold else Enum.Font.Gotham
-	l.TextSize = o.size or 15
+	l.TextSize = math.floor((o.size or 15) * UI.textScale + 0.5)
 	l.TextWrapped = true
 	l.TextXAlignment = o.align or Enum.TextXAlignment.Left
 	l.TextYAlignment = Enum.TextYAlignment.Top
@@ -73,12 +74,12 @@ end
 
 function UI.button(parent: Instance, text: string, color: Color3?, onClick: (() -> ())?): TextButton
 	local b = Instance.new("TextButton")
-	b.Size = UDim2.new(1, 0, 0, UI.MIN_TOUCH)
+	b.Size = UDim2.new(1, 0, 0, math.floor(UI.MIN_TOUCH * UI.textScale))
 	b.AutomaticSize = Enum.AutomaticSize.Y
 	b.BackgroundColor3 = color or Theme.Coral
 	b.TextColor3 = Theme.Cocoa
 	b.Font = Enum.Font.GothamBold
-	b.TextSize = 16
+	b.TextSize = math.floor(16 * UI.textScale + 0.5)
 	b.TextWrapped = true
 	b.Text = text
 	b.AutoButtonColor = true
