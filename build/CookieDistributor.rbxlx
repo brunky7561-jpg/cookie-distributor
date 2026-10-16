@@ -3567,6 +3567,11 @@ local function load(player: Player): (Data?, string?)
 		elseif not ok then
 			PlayerDataService.errors.load += 1
 			warn(`[PlayerDataService] load attempt {attempt} for {player.Name} failed: {result}`)
+			-- an unpublished place, or Studio without API access, can never reach the DataStore: do not make the player wait
+			local text = string.lower(tostring(result))
+			if string.find(text, "publish", 1, true) or string.find(text, "studio access", 1, true) or string.find(text, "studioaccesstoapis", 1, true) then
+				return nil, "offline"
+			end
 			task.wait(2 ^ attempt)
 		end
 	end

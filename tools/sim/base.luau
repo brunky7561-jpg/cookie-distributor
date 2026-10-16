@@ -116,7 +116,7 @@ local function deepcopy(v) if type(v) ~= "table" then return v end local o = {} 
 local store = { fail = 0, calls = 0 }
 function store:UpdateAsync(key, fn)
 	self.calls += 1
-	if self.fail > 0 then self.fail -= 1 error("DataStore request was added to queue (simulated failure)") end
+	if self.fail > 0 then self.fail -= 1 error(self.msg or "DataStore request was added to queue (simulated failure)") end
 	local new = fn(deepcopy(storeData[key]))
 	if new ~= nil then storeData[key] = deepcopy(new) end
 	return new

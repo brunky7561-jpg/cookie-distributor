@@ -260,4 +260,13 @@ do
 	join(late)
 	settle()
 	expect(type(got) == "table" and got.cash ~= nil, "GetState answers once the save has loaded")
+
+	-- 7. unpublished place / Studio without API access: no 30 second wait, the player gets temporary data at once
+	store.fail, store.msg = 100, "You must publish this place to the web to access DataStore."
+	local offline = newPlayer(9300, "Offline")
+	local before = store.calls
+	join(offline)
+	store.fail, store.msg = 0, nil
+	expect(store.calls - before == 1, "an unpublished place is detected on the first attempt")
+	expect(T.state(offline) ~= nil, "the player still gets a playable (unsaved) profile")
 end
