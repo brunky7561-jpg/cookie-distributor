@@ -73,6 +73,21 @@ Apps.list = {
 			return data.level >= 3 or data.milestones.firstOrderDone == true and data.cash >= 1500
 		end,
 	},
+	{
+		id = "staffboard",
+		title = "Staff Board",
+		blurb = "Hire bakers to bake your recipes while you handle orders.",
+		color = "Blueberry",
+		unlockHint = "Buy a Food Truck or bigger to get a second oven and unlock the Staff Board.",
+		unlock = function(data)
+			for id in data.properties do
+				if id ~= "apartment" then
+					return true
+				end
+			end
+			return false
+		end,
+	},
 } :: { AppDef }
 
 Apps.byId = {} :: { [string]: AppDef }
