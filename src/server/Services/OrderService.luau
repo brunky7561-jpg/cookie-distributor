@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local CustomerTemplates = require(ReplicatedStorage.Shared.Config.Customers)
 local Dialogue = require(ReplicatedStorage.Shared.Config.Dialogue)
+local Market = require(ReplicatedStorage.Shared.Config.Market)
 local Recipes = require(ReplicatedStorage.Shared.Config.Recipes)
 local RateLimit = require(ReplicatedStorage.Shared.Modules.RateLimit)
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
@@ -310,7 +311,8 @@ local function deliver(player: Player, order: Order): (boolean, any)
 	local t = templatesById[order.customerId]
 	local state = customerState(data, t.id)
 	local sat = satisfaction(batch, t)
-	local pay = math.floor(order.offer * (0.5 + sat) + 0.5)
+	local eventMult = Market.eventMult(Market.currentEvent(os.time()), batch.tags)
+	local pay = math.floor(order.offer * (0.5 + sat) * eventMult + 0.5)
 	local tip = 0
 	if sat > 0.85 then
 		tip = math.floor(order.offer * 0.2)
