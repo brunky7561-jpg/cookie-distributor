@@ -52,6 +52,8 @@ do
 			rawset(t, "_parent", v)
 			if v then table.insert(v._kids, t) end
 		else
+			-- mirror engine limits that have bitten before
+			if k == "TextSize" and type(v) == "number" and (v > 100 or v < 1) then error("TextSize " .. v .. " is outside 1-100 (the engine rejects this)", 2) end
 			rawset(t, k, v)
 		end
 	end

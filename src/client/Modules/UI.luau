@@ -85,7 +85,7 @@ function UI.label(parent: Instance, text: string, opts: LabelOpts?): TextLabel
 	l.BackgroundTransparency = 1
 	l.TextColor3 = o.color or Theme.Cocoa
 	l.Font = if o.bold then Enum.Font.GothamBold else Enum.Font.Gotham
-	l.TextSize = math.floor((o.size or 15) * UI.textScale + 0.5)
+	l.TextSize = math.min(100, math.floor((o.size or 15) * UI.textScale + 0.5)) -- 100 is the engine maximum
 	l.TextWrapped = true
 	l.TextXAlignment = o.align or Enum.TextXAlignment.Left
 	l.TextYAlignment = Enum.TextYAlignment.Top
@@ -104,7 +104,7 @@ function UI.button(parent: Instance, text: string, color: Color3?, onClick: (() 
 	b.BackgroundColor3 = color or Theme.Coral
 	b.TextColor3 = Theme.Cocoa
 	b.Font = Enum.Font.GothamBold
-	b.TextSize = math.floor(16 * UI.textScale + 0.5)
+	b.TextSize = math.min(100, math.floor(16 * UI.textScale + 0.5))
 	b.TextWrapped = true
 	b.Text = text
 	b.AutoButtonColor = true

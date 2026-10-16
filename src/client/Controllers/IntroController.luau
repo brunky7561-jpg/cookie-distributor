@@ -76,7 +76,7 @@ function IntroController:Start()
 		portrait.Size = UDim2.fromOffset(160, 160)
 		portrait.BackgroundTransparency = 1
 		portrait.Text = Intro.antagonist.portrait
-		portrait.TextSize = 110
+		portrait.TextSize = 100 -- Roblox rejects TextSize above 100
 		portrait.Parent = stage
 
 		local box = Instance.new("Frame")
@@ -199,7 +199,11 @@ function IntroController:Start()
 		end
 		local state: any = HUD.state
 		if state and not (state.milestones and state.milestones.introDone) then
-			cutscene()
+			local ok, err = pcall(cutscene)
+			if not ok then
+				warn(`[Intro] the cutscene failed: {err}`)
+				close() -- never leave the player stuck on the title screen
+			end
 		else
 			close()
 		end
