@@ -31,7 +31,7 @@ Open `build/CookieDistributor.rbxlx`. No manual setup. For saving, publish the p
 
 ## 4. Test plan
 
-1. Press Play. Output shows `[Server] started 6 services` and `[Client] started 5 controllers`, with no red errors. Expect: you spawn in front of a small cream house with a path to the square.
+1. Press Play. Output shows `[Server] started 6 services` and `[Client] started 6 controllers`, with no red errors. Expect: you spawn in front of a small cream house with a path to the square.
 2. The HUD shows `$ 50  Lv 1`, the objective "Make your first batch...", and Phone and Shop buttons bottom right.
 3. Walk into the house. A prompt "Bake / Kitchen" appears near the counter and the oven. Press E (touch: tap the prompt). The baking panel opens.
 4. Walk about 30 studs away and press Start baking from an already open panel. Expect "walk up to your kitchen counter or oven first".
