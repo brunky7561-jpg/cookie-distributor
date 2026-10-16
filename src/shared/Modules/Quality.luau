@@ -6,9 +6,11 @@ export type Factors = { recipe: number, bake: number, fresh: number, portion: nu
 
 Quality.WEIGHTS = { recipe = 0.40, bake = 0.30, fresh = 0.15, portion = 0.15 }
 
--- 1 at the ideal moment, falling to 0 once you are a full IDEAL away.
-function Quality.timing(elapsed: number, ideal: number): number
-	return math.clamp(1 - math.abs(elapsed - ideal) / ideal, 0, 1)
+-- 1 at the ideal moment, falling to 0 once you are a full IDEAL away. `slack` seconds either side still score 1
+-- (better equipment forgives more).
+function Quality.timing(elapsed: number, ideal: number, slack: number?): number
+	local off = math.max(0, math.abs(elapsed - ideal) - (slack or 0))
+	return math.clamp(1 - off / ideal, 0, 1)
 end
 
 function Quality.score(f: Factors): number

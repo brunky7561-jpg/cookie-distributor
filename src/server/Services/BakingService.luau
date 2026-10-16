@@ -15,6 +15,7 @@ local PlayerDataService = require(script.Parent.PlayerDataService)
 local EconomyService = require(script.Parent.EconomyService)
 local InventoryService = require(script.Parent.InventoryService)
 local InteractionService = require(script.Parent.InteractionService)
+local EquipmentService = require(script.Parent.EquipmentService)
 local OrderService = require(script.Parent.OrderService)
 
 type Stage = "mix" | "portion" | "bake" | "cool" | "package"
@@ -23,6 +24,7 @@ type Session = {
 	recipeId: string,
 	orderId: number?,
 	ingredients: { string },
+	bakeSlack: number, -- seconds of forgiveness from the oven the session started with
 	stage: Stage,
 	running: boolean, -- true while a timing bar is live (portion, bake)
 	t0: number,
@@ -53,6 +55,7 @@ local function describe(s: Session): any
 		running = s.running,
 		recipeId = s.recipeId,
 		orderId = s.orderId,
+		bakeSlack = s.bakeSlack,
 		coolRemaining = math.max(0, s.coolEnd - os.clock()),
 		elapsed = if s.running then os.clock() - s.t0 else 0, -- lets a reopened UI resume its timing bar
 	}
@@ -163,6 +166,7 @@ function BakingService:Init()
 			recipeId = recipeId,
 			orderId = orderId :: number?,
 			ingredients = expand(recipe.requires),
+			bakeSlack = EquipmentService:Effects(player).bakeSlack,
 			stage = "mix",
 			running = false,
 			t0 = os.clock(),
@@ -209,7 +213,7 @@ function BakingService:Init()
 			return true, describe(s)
 		elseif action == "ovenPull" and s.stage == "bake" and s.running then
 			local elapsed = now - s.t0
-			s.bake = Quality.timing(elapsed, Baking.BAKE_IDEAL)
+			s.bake = Quality.timing(elapsed, Baking.BAKE_IDEAL, s.bakeSlack)
 			s.bakeSigned = elapsed - Baking.BAKE_IDEAL
 			s.stage = "cool"
 			s.running = false
@@ -242,6 +246,9 @@ function BakingService:Init()
 		return false, "that step does not fit right now"
 	end
 
+	PlayerDataService.Reset:Connect(function(p)
+		sessions[p] = nil
+	end)
 	Players.PlayerRemoving:Connect(function(p)
 		sessions[p] = nil
 	end)
