@@ -106,7 +106,7 @@ function BakingController:Start()
 	end
 
 	-- A bar that fills over IDEAL * BAR_FACTOR seconds with a green zone around the ideal moment.
-	local function timingBar(ideal: number, startedAgo: number, buttonText: string, onStop: () -> ())
+	local function timingBar(ideal: number, startedAgo: number, buttonText: string, onStop: () -> (), slack: number?)
 		local mine = generation
 		local bar = Instance.new("Frame")
 		bar.Size = UDim2.new(1, 0, 0, 30)
@@ -114,7 +114,7 @@ function BakingController:Start()
 		bar.BorderSizePixel = 0
 		bar.Parent = frame
 		Instance.new("UICorner").Parent = bar
-		local width = 2 * Baking.ZONE_HALF / Baking.BAR_FACTOR
+		local width = 2 * (Baking.ZONE_HALF * ideal + (slack or 0)) / (ideal * Baking.BAR_FACTOR)
 		local zone = Instance.new("Frame")
 		zone.Size = UDim2.fromScale(width, 1)
 		zone.Position = UDim2.fromScale(0.5 - width / 2, 0)
@@ -255,7 +255,7 @@ function BakingController:Start()
 					else
 						label(tostring(res), 30)
 					end
-				end)
+				end, info.bakeSlack)
 			else
 				button("Load tray into the oven", Theme.Coral).Activated:Once(function()
 					local ok, res = step("ovenStart")

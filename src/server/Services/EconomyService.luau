@@ -22,6 +22,14 @@ function EconomyService:AddCash(player: Player, amount: number)
 	end
 end
 
+-- Ledger bookkeeping: kind is one of gross, supplies, wages, delivery, other. Amounts are always positive.
+function EconomyService:Record(player: Player, kind: string, amount: number)
+	local data = PlayerDataService:Get(player)
+	if data and data.stats[kind] ~= nil and amount > 0 then
+		data.stats[kind] += math.floor(amount)
+	end
+end
+
 function EconomyService:TrySpend(player: Player, amount: number): boolean
 	local data = PlayerDataService:Get(player)
 	if not data or amount < 0 or data.cash < amount then
@@ -65,6 +73,7 @@ function EconomyService:Init()
 		if not EconomyService:TrySpend(player, ing.cost * qty) then
 			return false, "not enough cash"
 		end
+		EconomyService:Record(player, "supplies", ing.cost * qty)
 		InventoryService:Add(player, id, qty)
 		return true
 	end

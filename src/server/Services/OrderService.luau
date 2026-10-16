@@ -264,6 +264,8 @@ local function deliver(player: Player, order: Order): (boolean, any)
 	end
 	order.state = "Paid"
 	EconomyService:AddCash(player, pay + tip)
+	EconomyService:Record(player, "gross", pay + tip)
+	data.stats.orders += 1
 	EconomyService:AddXp(player, math.floor(10 + sat * 20))
 
 	state.rel = math.max(0, state.rel + math.floor(sat * 10) - 4)
@@ -397,6 +399,11 @@ function OrderService:Init()
 end
 
 function OrderService:Start()
+	PlayerDataService.Reset:Connect(function(player: Player)
+		orders[player] = {}
+		push(player)
+		ensureFirstOrder(player)
+	end)
 	local function onJoin(player: Player)
 		for _ = 1, 60 do
 			if PlayerDataService:Get(player) or not player.Parent then

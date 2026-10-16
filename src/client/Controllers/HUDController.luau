@@ -6,6 +6,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
 local Theme = require(ReplicatedStorage.Shared.Config.Theme)
+local Milestones = require(ReplicatedStorage.Shared.Config.Milestones)
+local RunService = game:GetService("RunService")
 local UIBus = require(script.Parent.UIBus)
 
 local HUD = {}
@@ -123,6 +125,33 @@ function HUD:Start()
 	objective.Font = Enum.Font.Gotham
 	objective.TextYAlignment = Enum.TextYAlignment.Top
 
+	-- Next-goal panel: always shows the first unfinished business milestone.
+	local goalCard = card(gui, UDim2.fromOffset(300, 78), UDim2.new(0, 12, 0, 116))
+	local goalTitle = label(goalCard, "NEXT GOAL", 12, UDim2.fromOffset(12, 4), UDim2.new(1, -24, 0, 16))
+	goalTitle.TextColor3 = Theme.Coral
+	local goalText = label(goalCard, "", 15, UDim2.fromOffset(12, 20), UDim2.new(1, -24, 0, 22))
+	local goalHint = label(goalCard, "", 13, UDim2.fromOffset(12, 42), UDim2.new(1, -24, 0, 34))
+	goalHint.Font = Enum.Font.Gotham
+	goalHint.TextYAlignment = Enum.TextYAlignment.Top
+
+	-- Dev-only: wipes your save so the first-time flow can be replayed. The server refuses it outside Studio.
+	if RunService:IsStudio() then
+		local reset = Instance.new("TextButton")
+		reset.Size = UDim2.fromOffset(150, 32)
+		reset.Position = UDim2.new(0, 12, 1, -12)
+		reset.AnchorPoint = Vector2.new(0, 1)
+		reset.BackgroundColor3 = Theme.Blueberry
+		reset.TextColor3 = Theme.Cocoa
+		reset.Font = Enum.Font.GothamBold
+		reset.TextSize = 13
+		reset.Text = "Dev: reset my save"
+		reset.Parent = gui
+		Instance.new("UICorner").Parent = reset
+		reset.Activated:Connect(function()
+			Remotes.func("DevReset"):InvokeServer()
+		end)
+	end
+
 	actionButton(gui, "Phone", Theme.Coral, UDim2.new(1, -12, 1, -12), function()
 		UIBus.Toggle:Fire("Phone")
 	end)
@@ -133,6 +162,14 @@ function HUD:Start()
 	local function refreshObjective()
 		if HUD.state then
 			objective.Text = objectiveFor(HUD.state, HUD.orders)
+			local goal = Milestones.next(HUD.state)
+			if goal then
+				goalText.Text = goal.title
+				goalHint.Text = goal.hint
+			else
+				goalText.Text = "All starter goals complete!"
+				goalHint.Text = "New goals unlock as the game grows."
+			end
 		end
 	end
 

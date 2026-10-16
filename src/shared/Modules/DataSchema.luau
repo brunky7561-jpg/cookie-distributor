@@ -1,0 +1,206 @@
+--!strict
+-- Saved-data shape, migrations and sanitizing. Pure functions so they can be tested without Roblox.
+-- Rules: never trust saved data. Anything missing, mistyped or unknown falls back to a safe default.
+local Config = script.Parent.Parent.Config
+local Equipment = require(Config.Equipment)
+local Ingredients = require(Config.Ingredients)
+
+local DataSchema = {}
+
+DataSchema.VERSION = 2
+
+local MAX_COUNT = 9999
+local MAX_BATCHES = 30
+
+function DataSchema.default(): any
+	return {
+		schemaVersion = DataSchema.VERSION,
+		cash = 250,
+		level = 1,
+		xp = 0,
+		reputation = 0,
+		ingredients = { flour = 6, white_sugar = 4, butter = 4, chocolate_chips = 3 }, -- one small batch plus spare
+		batches = {},
+		recipes = { classic_chip = true },
+		properties = { apartment = true },
+		equipment = { basic_oven = true, mixing_bowl = true, cooling_rack = true },
+		customers = {},
+		nextBatchId = 1,
+		milestones = {},
+		stats = { gross = 0, supplies = 0, wages = 0, delivery = 0, other = 0, orders = 0 },
+		settings = { guidance = true, effects = true },
+	}
+end
+
+local function isNumber(v: any): boolean
+	return type(v) == "number" and v == v and v > -math.huge and v < math.huge
+end
+
+local function num(v: any, default: number, lo: number, hi: number): number
+	if isNumber(v) then
+		return math.clamp(v, lo, hi)
+	end
+	return default
+end
+
+local function int(v: any, default: number, lo: number, hi: number): number
+	return math.floor(num(v, default, lo, hi))
+end
+
+local function boolMap(v: any, allowed: ((string) -> boolean)?): { [string]: boolean }
+	local out: { [string]: boolean } = {}
+	if type(v) == "table" then
+		for k, val in v do
+			if type(k) == "string" and val == true and (allowed == nil or allowed(k)) then
+				out[k] = true
+			end
+		end
+	end
+	return out
+end
+
+local function stringList(v: any, maxLen: number): { string }
+	local out: { string } = {}
+	if type(v) == "table" then
+		for _, s in v do
+			if type(s) == "string" and #s <= 40 and #out < maxLen then
+				table.insert(out, s)
+			end
+		end
+	end
+	return out
+end
+
+local function sanitizeBatch(b: any): any?
+	if type(b) ~= "table" or not isNumber(b.id) then
+		return nil
+	end
+	local count = int(b.count, 0, 0, 100)
+	if count < 1 then
+		return nil
+	end
+	local quality = num(b.quality, 0.5, 0, 1)
+	return {
+		id = int(b.id, 0, 0, 2 ^ 31),
+		name = if type(b.name) == "string" then string.sub(b.name, 1, 40) else "Cookies",
+		recipeId = if type(b.recipeId) == "string" then string.sub(b.recipeId, 1, 40) else nil,
+		ingredients = stringList(b.ingredients, 20),
+		tags = stringList(b.tags, 20),
+		quality = quality,
+		score = int(b.score, math.floor(quality * 100), 0, 100),
+		grade = if type(b.grade) == "string" then string.sub(b.grade, 1, 20) else nil,
+		feedback = if type(b.feedback) == "string" then string.sub(b.feedback, 1, 200) else nil,
+		factors = if type(b.factors) == "table" then b.factors else nil,
+		appeal = int(b.appeal, 0, 0, 100),
+		effects = stringList(b.effects, 10),
+		count = count,
+		packaged = b.packaged == true,
+		-- reservedFor is intentionally dropped: open orders are not saved, so no box may stay reserved
+	}
+end
+
+local function sanitizeCustomers(v: any): { [string]: any }
+	local out: { [string]: any } = {}
+	if type(v) == "table" then
+		for id, s in v do
+			if type(id) == "string" and #id <= 40 and type(s) == "table" then
+				local memory = {}
+				if type(s.memory) == "table" then
+					for _, m in s.memory do
+						if type(m) == "table" and #memory < 5 then
+							table.insert(memory, {
+								name = if type(m.name) == "string" then string.sub(m.name, 1, 40) else "Cookies",
+								quality = num(m.quality, 0.5, 0, 1),
+								appeal = int(m.appeal, 0, 0, 100),
+								sat = num(m.sat, 0.5, 0, 1),
+							})
+						end
+					end
+				end
+				out[id] = { rel = int(s.rel, 0, 0, 100000), memory = memory }
+			end
+		end
+	end
+	return out
+end
+
+-- Brings data from any older version up to VERSION. Unknown future versions are not handled here.
+function DataSchema.migrate(raw: any): any
+	if type(raw) ~= "table" then
+		return DataSchema.default()
+	end
+	local from = if isNumber(raw.schemaVersion) then raw.schemaVersion else 1
+	if from < 2 then
+		-- v1 (milestones 0 and 1): no equipment, stats, settings or reputation; recipe names instead of ids
+		raw.equipment = raw.equipment or { basic_oven = true, mixing_bowl = true, cooling_rack = true }
+		raw.stats = raw.stats or { gross = 0, supplies = 0, wages = 0, delivery = 0, other = 0, orders = 0 }
+		raw.settings = raw.settings or { guidance = true, effects = true }
+		raw.reputation = raw.reputation or 0
+		raw.recipes = { classic_chip = true }
+	end
+	raw.schemaVersion = DataSchema.VERSION
+	return raw
+end
+
+-- Returns a fresh, fully valid table built only from fields we know about.
+function DataSchema.sanitize(raw: any): any
+	local d = DataSchema.default()
+	if type(raw) ~= "table" then
+		return d
+	end
+
+	d.cash = num(raw.cash, d.cash, 0, 1e9)
+	d.level = int(raw.level, 1, 1, 1000)
+	d.xp = int(raw.xp, 0, 0, 1e9)
+	d.reputation = int(raw.reputation, 0, 0, 1e9)
+	d.nextBatchId = int(raw.nextBatchId, 1, 1, 2 ^ 31)
+
+	if type(raw.ingredients) == "table" then
+		local ing: { [string]: number } = {}
+		for id, n in raw.ingredients do
+			if type(id) == "string" and Ingredients[id] and isNumber(n) then
+				local count = int(n, 0, 0, MAX_COUNT)
+				if count > 0 then
+					ing[id] = count
+				end
+			end
+		end
+		d.ingredients = ing
+	end
+
+	local batches = {}
+	if type(raw.batches) == "table" then
+		for _, b in raw.batches do
+			local clean = sanitizeBatch(b)
+			if clean and #batches < MAX_BATCHES then
+				table.insert(batches, clean)
+				d.nextBatchId = math.max(d.nextBatchId, clean.id + 1)
+			end
+		end
+	end
+	d.batches = batches
+
+	d.recipes = boolMap(raw.recipes)
+	d.recipes.classic_chip = true -- the starter recipe can never be lost
+	d.properties = boolMap(raw.properties)
+	d.properties.apartment = true
+	d.equipment = boolMap(raw.equipment, function(id)
+		return Equipment.catalog[id] ~= nil
+	end)
+	for _, id in Equipment.starter do
+		d.equipment[id] = true
+	end
+	d.milestones = boolMap(raw.milestones)
+	d.customers = sanitizeCustomers(raw.customers)
+
+	local stats = if type(raw.stats) == "table" then raw.stats else {}
+	for k in d.stats do
+		d.stats[k] = int(stats[k], 0, 0, 1e12)
+	end
+	local settings = if type(raw.settings) == "table" then raw.settings else {}
+	d.settings.guidance = settings.guidance ~= false
+	d.settings.effects = settings.effects ~= false
+	return d
+end
+
+return DataSchema

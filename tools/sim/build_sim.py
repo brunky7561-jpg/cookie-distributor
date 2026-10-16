@@ -17,5 +17,9 @@ out=['local MODS = {}']
 for k,v in mods.items():
     out.append(f'MODS["{k}"] = function(script)\n{v}\nend')
 import sys
-body=open(os.path.join(here,'harness.luau')).read()
+parts=[open(os.path.join(here,'base.luau')).read()]
+for f in sorted(x for x in os.listdir(here) if x.startswith('m') and x.endswith('.luau')):
+    parts.append(open(os.path.join(here,f)).read())
+parts.append('print("\\n" .. expectCount .. " checks passed")')
+body='\n'.join(parts)
 open(sys.argv[1],'w').write('\n'.join(out)+'\n'+body)
