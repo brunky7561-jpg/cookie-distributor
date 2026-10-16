@@ -1,5 +1,9 @@
 --!strict
 -- Loads every ModuleScript in Services and calls :Init() then :Start() on each.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
+Remotes.declareAll()
+
 local services = script.Parent:WaitForChild("Services")
 
 local loaded = {}

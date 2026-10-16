@@ -269,4 +269,19 @@ do
 	store.fail, store.msg = 0, nil
 	expect(store.calls - before == 1, "an unpublished place is detected on the first attempt")
 	expect(T.state(offline) ~= nil, "the player still gets a playable (unsaved) profile")
+
+	-- 8. every remote a client script names is created by the server up front
+	local RemotesMod = require(nodes["Shared.Modules.Remotes"])
+	local declared = {}
+	for _, n in RemotesMod.CLIENT_EVENTS do declared[n] = "event" end
+	for _, n in RemotesMod.CLIENT_FUNCS do declared[n] = "func" end
+	local missing = {}
+	for key, src in CLIENT_SRC do
+		for kind, name in src:gmatch('Remotes%.(%a+)%("(%a+)"%)') do
+			if declared[name] ~= kind then table.insert(missing, key .. ":" .. name) end
+		end
+	end
+	expect(#missing == 0, "client remotes are all pre-declared: " .. table.concat(missing, ", "))
+	RemotesMod.declareAll()
+	expect(R.GetState ~= nil and R.Notify ~= nil and R.BakeStatus ~= nil, "declareAll creates the remotes")
 end
