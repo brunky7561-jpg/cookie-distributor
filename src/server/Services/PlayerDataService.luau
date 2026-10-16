@@ -23,13 +23,13 @@ export type Data = {
 	nextBatchId: number,
 }
 
-local DataService = {}
+local PlayerDataService = {}
 
 local store = DataStoreService:GetDataStore(STORE_NAME)
 local profiles: { [Player]: Data } = {}
 local unsaved: { [Player]: boolean } = {} -- profiles that failed to load: never overwrite the real save
 local changedEvent = Instance.new("BindableEvent")
-DataService.Changed = changedEvent.Event :: RBXScriptSignal
+PlayerDataService.Changed = changedEvent.Event :: RBXScriptSignal
 
 local stateRemote = Remotes.event("StateUpdated")
 
@@ -81,7 +81,7 @@ local function load(player: Player): Data?
 		if ok and locked then
 			task.wait(3)
 		elseif not ok then
-			warn(`[DataService] load attempt {attempt} failed: {result}`)
+			warn(`[PlayerDataService] load attempt {attempt} failed: {result}`)
 			task.wait(2 ^ attempt)
 		end
 	end
@@ -102,17 +102,17 @@ local function save(player: Player, release: boolean): boolean
 		end)
 	end)
 	if not ok then
-		warn(`[DataService] save failed for {player.Name}: {err}`)
+		warn(`[PlayerDataService] save failed for {player.Name}: {err}`)
 	end
 	return ok
 end
 
-function DataService:Get(player: Player): Data?
+function PlayerDataService:Get(player: Player): Data?
 	return profiles[player]
 end
 
 -- Call after any change so the client UI and other services stay in sync.
-function DataService:Replicate(player: Player)
+function PlayerDataService:Replicate(player: Player)
 	local data = profiles[player]
 	if data then
 		stateRemote:FireClient(player, data)
@@ -126,12 +126,12 @@ local function onJoin(player: Player)
 		return
 	end
 	if not data then
-		warn(`[DataService] could not load {player.Name}; using temporary data that will NOT be saved`)
+		warn(`[PlayerDataService] could not load {player.Name}; using temporary data that will NOT be saved`)
 		data = defaultData()
 		unsaved[player] = true
 	end
 	profiles[player] = data
-	DataService:Replicate(player)
+	PlayerDataService:Replicate(player)
 end
 
 local function onLeave(player: Player)
@@ -140,13 +140,13 @@ local function onLeave(player: Player)
 	unsaved[player] = nil
 end
 
-function DataService:Init()
+function PlayerDataService:Init()
 	Remotes.func("GetState").OnServerInvoke = function(player: Player)
 		return profiles[player]
 	end
 end
 
-function DataService:Start()
+function PlayerDataService:Start()
 	Players.PlayerAdded:Connect(function(p)
 		task.spawn(onJoin, p)
 	end)
@@ -175,4 +175,4 @@ function DataService:Start()
 	end)
 end
 
-return DataService
+return PlayerDataService

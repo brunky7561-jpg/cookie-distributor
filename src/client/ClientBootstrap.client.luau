@@ -1,6 +1,6 @@
 --!strict
 -- Loads every ModuleScript in Controllers and calls :Init() then :Start() on each.
-local controllers = script:WaitForChild("Controllers")
+local controllers = script.Parent:WaitForChild("Controllers")
 
 local loaded = {}
 for _, module in controllers:GetChildren() do

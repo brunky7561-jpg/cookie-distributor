@@ -1,6 +1,6 @@
 --!strict
 -- Loads every ModuleScript in Services and calls :Init() then :Start() on each.
-local services = script:WaitForChild("Services")
+local services = script.Parent:WaitForChild("Services")
 
 local loaded = {}
 for _, module in services:GetChildren() do

@@ -1,13 +1,13 @@
 --!strict
--- Pure function: ingredient ids + bake quality -> Craving score. Shared so UI can preview it.
+-- Pure function: ingredient ids + bake quality -> Appeal score. Shared so UI can preview it.
 local Ingredients = require(script.Parent.Parent.Config.Ingredients)
 local Recipes = require(script.Parent.Parent.Config.Recipes)
 
-local CravingCalc = {}
+local AppealCalc = {}
 
 local DIMINISHING = 0.75 -- each repeat of the same ingredient adds 75% of the previous
 
-function CravingCalc.compute(ingredientIds: { string }, quality: number): { score: number, effects: { string } }
+function AppealCalc.compute(ingredientIds: { string }, quality: number): { score: number, effects: { string } }
 	local seen: { [string]: number } = {}
 	local tags: { [string]: boolean } = {}
 	local effects: { [string]: boolean } = {}
@@ -20,7 +20,7 @@ function CravingCalc.compute(ingredientIds: { string }, quality: number): { scor
 		end
 		local n = seen[id] or 0
 		seen[id] = n + 1
-		total += ing.craving * DIMINISHING ^ n
+		total += ing.appeal * DIMINISHING ^ n
 		for _, t in ing.tags do
 			tags[t] = true
 		end
@@ -47,4 +47,4 @@ function CravingCalc.compute(ingredientIds: { string }, quality: number): { scor
 	return { score = score, effects = list }
 end
 
-return CravingCalc
+return AppealCalc

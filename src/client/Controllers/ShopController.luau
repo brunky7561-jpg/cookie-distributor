@@ -6,7 +6,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Ingredients = require(ReplicatedStorage.Shared.Config.Ingredients)
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
-local HUD = require(script.Parent.HUD)
+local HUD = require(script.Parent.HUDController)
+local UIBus = require(script.Parent.UIBus)
 
 local ShopController = {}
 
@@ -82,9 +83,19 @@ function ShopController:Start()
 		end
 	end)
 
+	local function toggle()
+		gui.Enabled = not gui.Enabled
+	end
+
+	UIBus.Toggle.Event:Connect(function(name)
+		if name == "Shop" then
+			toggle()
+		end
+	end)
+
 	ContextActionService:BindAction("ToggleShop", function(_, inputState)
 		if inputState == Enum.UserInputState.Begin then
-			gui.Enabled = not gui.Enabled
+			toggle()
 		end
 		return Enum.ContextActionResult.Pass
 	end, false, Enum.KeyCode.B)

@@ -1,25 +1,23 @@
 --!strict
--- Customers text you orders; you deliver batches and they react based on taste, Craving and quality.
+-- Customers text you orders; you deliver batches and they react based on taste, Appeal and quality.
 -- Delivery is a phone "hand over" for now. Walking to meetup spots comes with the world build.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local CustomerTemplates = require(ReplicatedStorage.Shared.Config.Customers)
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
-local DataService = require(script.Parent.DataService)
+local PlayerDataService = require(script.Parent.PlayerDataService)
 local EconomyService = require(script.Parent.EconomyService)
 
 local ORDER_INTERVAL = 30 -- seconds between new orders per player
 local MAX_ACTIVE_ORDERS = 3
 local ORDER_LIFETIME = 300 -- seconds before an order expires
-local GHOST_SECONDS = 180
-local BURNOUT_LIMIT = 10
 local REL_LEVELS = { { 0, "Stranger" }, { 10, "Customer" }, { 30, "Regular" }, { 70, "Fan" }, { 150, "Superfan" } }
 
 local ORDER_TEXT: { [string]: string } = {
 	Foodie = "Hi! I'd love {count} really well-made cookies. Quality matters to me.",
 	BargainHunter = "Hey, got a deal on {count} cookies? Nothing fancy.",
-	SugarFiend = "I NEED {count} cookies. The sweeter the better!",
+	SweetTooth = "I NEED {count} cookies. The sweeter the better!",
 	HealthNut = "Could I get {count} not-too-sweet cookies? Thanks!",
 	Trendsetter = "Make me {count} cookies nobody has tried yet!",
 	Grump = "{count} cookies. Don't disappoint me.",
@@ -61,7 +59,7 @@ end
 local function customerState(data: any, id: string): any
 	local s = data.customers[id]
 	if not s then
-		s = { rel = 0, hooked = 0, burnout = 0, ghostUntil = 0, memory = {} }
+		s = { rel = 0, memory = {} }
 		data.customers[id] = s
 	end
 	return s
@@ -90,7 +88,7 @@ local function view(order: Order): any
 end
 
 local function spawnOrder(player: Player)
-	local data = DataService:Get(player)
+	local data = PlayerDataService:Get(player)
 	if not data then
 		return
 	end
@@ -106,7 +104,7 @@ local function spawnOrder(player: Player)
 	local pool = {}
 	for _, t in CustomerTemplates do
 		local s = customerState(data, t.id)
-		if not busy[t.id] and os.time() >= s.ghostUntil then
+		if not busy[t.id] then
 			table.insert(pool, t)
 		end
 	end
@@ -127,7 +125,7 @@ local function spawnOrder(player: Player)
 	Remotes.event("OrderReceived"):FireClient(player, view(order))
 end
 
-local function satisfaction(batch: any, t: any, state: any): (number, number)
+local function satisfaction(batch: any, t: any): number
 	local taste = 0.6
 	for _, tag in t.loves do
 		if table.find(batch.tags, tag) then
@@ -142,20 +140,17 @@ local function satisfaction(batch: any, t: any, state: any): (number, number)
 	taste = math.clamp(taste, 0, 1)
 
 	local fit = 1
-	local over = 0
-	if batch.craving < t.cravingMin then
-		fit = math.clamp(1 - (t.cravingMin - batch.craving) / 30, 0, 1)
-	elseif batch.craving > t.cravingMax then
-		over = batch.craving - t.cravingMax
-		fit = math.clamp(1 - over / 30, 0, 1)
+	if batch.appeal < t.appealMin then
+		fit = math.clamp(1 - (t.appealMin - batch.appeal) / 30, 0, 1)
+	elseif batch.appeal > t.appealMax then
+		fit = math.clamp(1 - (batch.appeal - t.appealMax) / 30, 0, 1)
 	end
-	local sat = 0.4 * taste + 0.3 * fit + 0.3 * batch.quality
-	return sat, over
+	return 0.4 * taste + 0.3 * fit + 0.3 * batch.quality
 end
 
 function CustomerService:Init()
 	Remotes.func("DeliverOrder").OnServerInvoke = function(player: Player, orderId: any, batchId: any)
-		local data = DataService:Get(player)
+		local data = PlayerDataService:Get(player)
 		local order = if type(orderId) == "number" then activeFor(player)[orderId] else nil
 		if not data or not order or type(batchId) ~= "number" then
 			return false, "that order is gone"
@@ -182,7 +177,7 @@ function CustomerService:Init()
 
 		local t = templatesById[order.customerId]
 		local state = customerState(data, t.id)
-		local sat, over = satisfaction(batch, t, state)
+		local sat = satisfaction(batch, t)
 
 		local pay = math.floor(order.offer * (0.5 + sat) + 0.5)
 		if sat > 0.85 then
@@ -192,37 +187,24 @@ function CustomerService:Init()
 		EconomyService:AddXp(player, math.floor(10 + sat * 20))
 
 		state.rel = math.max(0, state.rel + math.floor(sat * 10) - 4)
-		state.hooked = math.min(100, state.hooked + batch.craving / 10)
-		if over > 0 then
-			state.burnout += over / 5
-		else
-			state.burnout = math.max(0, state.burnout - 1)
-		end
-		local ghosted = false
-		if state.burnout >= BURNOUT_LIMIT then
-			state.ghostUntil = os.time() + GHOST_SECONDS
-			state.burnout = 0
-			ghosted = true
-		end
-		table.insert(state.memory, { name = batch.name, quality = batch.quality, craving = batch.craving, sat = sat })
+		table.insert(state.memory, { name = batch.name, quality = batch.quality, appeal = batch.appeal, sat = sat })
 		if #state.memory > 5 then
 			table.remove(state.memory, 1)
 		end
 
 		local pool = if sat > 0.75 then REACTIONS.great elseif sat > 0.45 then REACTIONS.ok else REACTIONS.bad
-		DataService:Replicate(player)
+		PlayerDataService:Replicate(player)
 		return true, {
 			customerName = t.name,
 			pay = pay,
 			satisfaction = sat,
 			reaction = pool[math.random(#pool)],
 			relationship = relLevel(state.rel),
-			ghosted = ghosted,
 		}
 	end
 
 	Remotes.func("DeclineOrder").OnServerInvoke = function(player: Player, orderId: any)
-		local data = DataService:Get(player)
+		local data = PlayerDataService:Get(player)
 		local order = if type(orderId) == "number" then activeFor(player)[orderId] else nil
 		if not data or not order then
 			return false
@@ -230,7 +212,7 @@ function CustomerService:Init()
 		activeFor(player)[orderId] = nil
 		local state = customerState(data, order.customerId)
 		state.rel = math.max(0, state.rel - 1)
-		DataService:Replicate(player)
+		PlayerDataService:Replicate(player)
 		return true
 	end
 
@@ -247,7 +229,7 @@ function CustomerService:Start()
 			for id, o in active do
 				if os.time() >= o.expires then
 					active[id] = nil
-					local data = DataService:Get(player)
+					local data = PlayerDataService:Get(player)
 					if data then
 						local s = customerState(data, o.customerId)
 						s.rel = math.max(0, s.rel - 1)

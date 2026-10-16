@@ -1,15 +1,16 @@
 --!strict
 -- Server-side baking: validates ingredients, times the mix and oven steps itself, and creates batches.
--- The client only draws the bars; it can never send a quality or a Craving score.
+-- The client only draws the bars; it can never send a quality or a Appeal score.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 local Ingredients = require(ReplicatedStorage.Shared.Config.Ingredients)
 local Recipes = require(ReplicatedStorage.Shared.Config.Recipes)
-local CravingCalc = require(ReplicatedStorage.Shared.Modules.CravingCalc)
+local AppealCalc = require(ReplicatedStorage.Shared.Modules.AppealCalc)
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
-local DataService = require(script.Parent.DataService)
+local PlayerDataService = require(script.Parent.PlayerDataService)
 local EconomyService = require(script.Parent.EconomyService)
+local InteractionService = require(script.Parent.InteractionService)
 
 local MAX_INGREDIENTS = 8
 local COOKIES_PER_BATCH = 6
@@ -51,9 +52,12 @@ end
 
 function BakingService:Init()
 	Remotes.func("BakeStart").OnServerInvoke = function(player: Player, picked: any)
-		local data = DataService:Get(player)
+		local data = PlayerDataService:Get(player)
 		if not data or sessions[player] or type(picked) ~= "table" then
 			return false, "cannot start a bake right now"
+		end
+		if not InteractionService:IsNearStation(player, "BakeStation") then
+			return false, "walk up to your kitchen counter or oven first"
 		end
 		if #picked < 1 or #picked > MAX_INGREDIENTS then
 			return false, `pick 1 to {MAX_INGREDIENTS} ingredients`
@@ -85,7 +89,7 @@ function BakingService:Init()
 		for id, n in need do
 			data.ingredients[id] -= n
 		end
-		DataService:Replicate(player)
+		PlayerDataService:Replicate(player)
 
 		local ids: { string } = table.clone(picked)
 		sessions[player] = { ingredients = ids, stage = "mixing", t0 = os.clock(), mixScore = 0 }
@@ -114,7 +118,7 @@ function BakingService:Init()
 
 	Remotes.func("OvenPull").OnServerInvoke = function(player: Player)
 		local s = sessions[player]
-		local data = DataService:Get(player)
+		local data = PlayerDataService:Get(player)
 		if not s or s.stage ~= "baking" or not data then
 			return false
 		end
@@ -122,7 +126,7 @@ function BakingService:Init()
 
 		local ovenScore = score(os.clock() - s.t0, ovenIdeal(s))
 		local quality = s.mixScore * 0.4 + ovenScore * 0.6
-		local result = CravingCalc.compute(s.ingredients, quality)
+		local result = AppealCalc.compute(s.ingredients, quality)
 
 		local tagSet: { [string]: boolean } = {}
 		for _, id in s.ingredients do
@@ -143,7 +147,7 @@ function BakingService:Init()
 			ingredients = s.ingredients,
 			tags = tags,
 			quality = quality,
-			craving = result.score,
+			appeal = result.score,
 			effects = result.effects,
 			count = COOKIES_PER_BATCH,
 		}
@@ -154,7 +158,7 @@ function BakingService:Init()
 			EconomyService:AddXp(player, 25) -- discovery bonus
 		end
 		EconomyService:AddXp(player, math.floor(5 + quality * 15))
-		DataService:Replicate(player)
+		PlayerDataService:Replicate(player)
 		return true, batch
 	end
 
