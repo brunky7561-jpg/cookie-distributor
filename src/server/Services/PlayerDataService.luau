@@ -185,7 +185,11 @@ function PlayerDataService:Start()
 		while true do
 			task.wait(AUTOSAVE_INTERVAL)
 			for p in profiles do
-				task.spawn(save, p, false)
+				task.spawn(function()
+					if not save(p, false) and profiles[p] and not unsaved[p] then
+						Remotes.event("Notify"):FireClient(p, "Your progress could not be saved just now. We will keep trying.")
+					end
+				end)
 			end
 		end
 	end)
