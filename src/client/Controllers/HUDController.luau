@@ -10,7 +10,15 @@ local UIBus = require(script.Parent.UIBus)
 
 local HUD = {}
 HUD.state = nil :: any
+HUD.orders = {} :: { any }
 local listeners: { (any) -> () } = {}
+local orderListeners: { (any) -> () } = {}
+
+-- Called whenever the server sends the full order list (and once right away if we already have it).
+function HUD:OnOrders(fn: (any) -> ())
+	table.insert(orderListeners, fn)
+	fn(HUD.orders)
+end
 
 function HUD:OnState(fn: (any) -> ())
 	table.insert(listeners, fn)
@@ -19,11 +27,30 @@ function HUD:OnState(fn: (any) -> ())
 	end
 end
 
-local function objectiveFor(state: any): string
-	if #state.batches == 0 then
-		return "Make your first batch: walk to the counter or oven in your kitchen and press E (or tap Bake)."
+-- The objective follows the most advanced active order, so the first loop is always spelled out.
+local function objectiveFor(state: any, orders: { any }): string
+	local best: any = nil
+	local rank = { Available = 1, Accepted = 2, ["In Production"] = 3, Ready = 4 }
+	for _, o in orders do
+		if not best or (rank[o.state] or 0) > (rank[best.state] or 0) then
+			best = o
+		end
 	end
-	return "Nice! Open the phone to see who wants cookies, then deliver an order."
+	if best then
+		if best.state == "Available" then
+			return `Open your phone (P or the Phone button) and accept {best.customerName}'s order.`
+		elseif best.state == "Accepted" then
+			return `Walk to your kitchen counter or oven and press E to bake {best.recipeName}.`
+		elseif best.state == "In Production" then
+			return "Finish your bake at the kitchen station (press E to continue)."
+		elseif best.state == "Ready" then
+			return `Open your phone and deliver the cookies to {best.customerName}.`
+		end
+	end
+	if state.milestones and state.milestones.firstOrderDone then
+		return "Nice work! Wait for new orders, or open the Shop (B) to stock up."
+	end
+	return "Waiting for your first customer to text you..."
 end
 
 local function card(parent: Instance, size: UDim2, position: UDim2): Frame
@@ -103,16 +130,39 @@ function HUD:Start()
 		UIBus.Toggle:Fire("Shop")
 	end)
 
+	local function refreshObjective()
+		if HUD.state then
+			objective.Text = objectiveFor(HUD.state, HUD.orders)
+		end
+	end
+
 	local function apply(state: any)
 		HUD.state = state
 		stats.Text = `$ {math.floor(state.cash)}    Lv {state.level}`
-		objective.Text = objectiveFor(state)
+		refreshObjective()
 		for _, fn in listeners do
 			task.spawn(fn, state)
 		end
 	end
 
+	local function applyOrders(list: any)
+		HUD.orders = list
+		refreshObjective()
+		for _, fn in orderListeners do
+			task.spawn(fn, list)
+		end
+	end
+
+	Remotes.event("OrdersUpdated").OnClientEvent:Connect(applyOrders)
 	Remotes.event("StateUpdated").OnClientEvent:Connect(apply)
+	task.spawn(function()
+		local okOrders, list = pcall(function()
+			return Remotes.func("GetOrders"):InvokeServer()
+		end)
+		if okOrders and list then
+			applyOrders(list)
+		end
+	end)
 	local ok, state = pcall(function()
 		return Remotes.func("GetState"):InvokeServer()
 	end)

@@ -15,7 +15,7 @@ export type Synergy = {
 	multiplier: number,
 }
 
-export type Personality = "Foodie" | "BargainHunter" | "SweetTooth" | "HealthNut" | "Trendsetter" | "Grump"
+export type Personality = "Neighbor" | "Foodie" | "BargainHunter" | "SweetTooth" | "HealthNut" | "Trendsetter" | "Grump"
 
 export type CustomerTemplate = {
 	id: string,
@@ -26,6 +26,20 @@ export type CustomerTemplate = {
 	appealMin: number,
 	appealMax: number,
 	budget: number,
+}
+
+export type RecipeDef = {
+	id: string,
+	name: string,
+	yield: number,
+	slots: { [string]: string },
+	requires: { [string]: number },
+}
+
+export type BoxDef = {
+	id: string,
+	name: string,
+	size: number,
 }
 
 export type PropertyDef = {

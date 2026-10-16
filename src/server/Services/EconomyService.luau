@@ -5,6 +5,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Ingredients = require(ReplicatedStorage.Shared.Config.Ingredients)
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
 local PlayerDataService = require(script.Parent.PlayerDataService)
+local InventoryService = require(script.Parent.InventoryService)
+local RateLimit = require(ReplicatedStorage.Shared.Modules.RateLimit)
 
 local MAX_BUY = 50
 local XP_PER_LEVEL = 100 -- level n needs n * XP_PER_LEVEL to reach n + 1
@@ -45,7 +47,10 @@ end
 
 function EconomyService:Init()
 	Remotes.func("BuyIngredient").OnServerInvoke = function(player: Player, id: any, qty: any)
-		if type(id) ~= "string" or type(qty) ~= "number" then
+		if not RateLimit.check(player, "BuyIngredient", 0.1) then
+			return false, "slow down"
+		end
+		if type(id) ~= "string" or type(qty) ~= "number" or qty ~= qty then
 			return false, "bad request"
 		end
 		qty = math.floor(qty)
@@ -60,8 +65,7 @@ function EconomyService:Init()
 		if not EconomyService:TrySpend(player, ing.cost * qty) then
 			return false, "not enough cash"
 		end
-		data.ingredients[id] = (data.ingredients[id] or 0) + qty
-		PlayerDataService:Replicate(player)
+		InventoryService:Add(player, id, qty)
 		return true
 	end
 end

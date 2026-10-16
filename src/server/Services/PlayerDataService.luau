@@ -21,6 +21,7 @@ export type Data = {
 	properties: { [string]: boolean },
 	customers: { [string]: any },
 	nextBatchId: number,
+	milestones: { [string]: boolean },
 }
 
 local PlayerDataService = {}
@@ -38,12 +39,13 @@ local function defaultData(): Data
 		cash = 50,
 		level = 1,
 		xp = 0,
-		ingredients = { flour = 4, butter = 2, white_sugar = 2 },
+		ingredients = { flour = 4, butter = 2, white_sugar = 2, chocolate_chips = 2 }, -- enough for the first batch
 		batches = {},
 		recipes = {},
 		properties = { apartment = true },
 		customers = {},
 		nextBatchId = 1,
+		milestones = {},
 	}
 end
 
