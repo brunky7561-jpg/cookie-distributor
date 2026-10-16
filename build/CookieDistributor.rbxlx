@@ -1551,12 +1551,20 @@ end
 
 for _, entry in loaded do
 	if type(entry.svc) == "table" and entry.svc.Init then
-		entry.svc:Init()
+		local ok, err = pcall(entry.svc.Init, entry.svc)
+		if not ok then
+			warn(`[Server] {entry.name}:Init failed: {err}`) -- one broken service must not stop the others
+		end
 	end
 end
 for _, entry in loaded do
 	if type(entry.svc) == "table" and entry.svc.Start then
-		task.spawn(entry.svc.Start, entry.svc)
+		task.spawn(function()
+			local ok, err = pcall(entry.svc.Start, entry.svc)
+			if not ok then
+				warn(`[Server] {entry.name}:Start failed: {err}`)
+			end
+		end)
 	end
 end
 
@@ -3641,6 +3649,7 @@ local function onJoin(player: Player)
 		Remotes.event("Notify"):FireClient(player, "We could not load your saved progress. You can play, but nothing will be saved this session.")
 	end
 	profiles[player] = data
+	print(`[PlayerDataService] save ready for {player.Name} (saved: {not unsaved[player]})`)
 	PlayerDataService:Replicate(player)
 end
 
@@ -5745,12 +5754,20 @@ end
 
 for _, entry in loaded do
 	if type(entry.c) == "table" and entry.c.Init then
-		entry.c:Init()
+		local ok, err = pcall(entry.c.Init, entry.c)
+		if not ok then
+			warn(`[Client] {entry.name}:Init failed: {err}`)
+		end
 	end
 end
 for _, entry in loaded do
 	if type(entry.c) == "table" and entry.c.Start then
-		task.spawn(entry.c.Start, entry.c)
+		task.spawn(function()
+			local ok, err = pcall(entry.c.Start, entry.c)
+			if not ok then
+				warn(`[Client] {entry.name}:Start failed: {err}`)
+			end
+		end)
 	end
 end
 
@@ -6529,7 +6546,8 @@ function HUD:Start()
 		end
 	end
 	task.spawn(function()
-		for _ = 1, 40 do
+		local lastError = ""
+		for attempt = 1, 40 do
 			local ok, state = pcall(function()
 				return Remotes.func("GetState"):InvokeServer()
 			end)
@@ -6538,9 +6556,14 @@ function HUD:Start()
 				fetchOrders()
 				return
 			end
+			-- show what is going on instead of an endless "Loading..."
+			lastError = if ok then "the server has no save for you yet" else tostring(state)
+			stats.Text = `Connecting... ({attempt})`
+			objective.Text = lastError
 			task.wait(1)
 		end
-		stats.Text = "Could not load your save. Rejoin the game."
+		stats.Text = "Could not load your save"
+		objective.Text = `{lastError}. Rejoin the game.`
 	end)
 end
 

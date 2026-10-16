@@ -148,6 +148,7 @@ local function onJoin(player: Player)
 		Remotes.event("Notify"):FireClient(player, "We could not load your saved progress. You can play, but nothing will be saved this session.")
 	end
 	profiles[player] = data
+	print(`[PlayerDataService] save ready for {player.Name} (saved: {not unsaved[player]})`)
 	PlayerDataService:Replicate(player)
 end
 

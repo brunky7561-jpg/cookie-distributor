@@ -245,7 +245,8 @@ function HUD:Start()
 		end
 	end
 	task.spawn(function()
-		for _ = 1, 40 do
+		local lastError = ""
+		for attempt = 1, 40 do
 			local ok, state = pcall(function()
 				return Remotes.func("GetState"):InvokeServer()
 			end)
@@ -254,9 +255,14 @@ function HUD:Start()
 				fetchOrders()
 				return
 			end
+			-- show what is going on instead of an endless "Loading..."
+			lastError = if ok then "the server has no save for you yet" else tostring(state)
+			stats.Text = `Connecting... ({attempt})`
+			objective.Text = lastError
 			task.wait(1)
 		end
-		stats.Text = "Could not load your save. Rejoin the game."
+		stats.Text = "Could not load your save"
+		objective.Text = `{lastError}. Rejoin the game.`
 	end)
 end
 
