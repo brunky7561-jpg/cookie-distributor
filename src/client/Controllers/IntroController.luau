@@ -238,7 +238,7 @@ function IntroController:Start()
 		play.Text = "Loading..."
 		-- the save may still be loading; the HUD keeps retrying, so wait for it
 		local waited = 0
-		while not HUD.state and waited < 30 do
+		while not HUD.state and waited < 15 do
 			task.wait(0.25)
 			waited += 0.25
 		end

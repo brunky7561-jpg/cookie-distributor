@@ -13,7 +13,7 @@ local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
 local STORE_NAME = "CookieDistributor_v1"
 local LOCK_TIMEOUT = 120 -- seconds before a dead server's lock is ignored
 local AUTOSAVE_INTERVAL = 60
-local LOAD_ATTEMPTS = 4
+local LOAD_ATTEMPTS = 3 -- with 1 s and 2 s pauses: a player never waits more than a few seconds for the save
 local SAVE_ATTEMPTS = 3
 local DEV_USER_IDS: { [number]: boolean } = {} -- add a UserId here to allow the dev reset outside Studio
 
@@ -39,7 +39,9 @@ end
 -- Returns the profile, or nil plus a reason when the save must not be touched ("locked", "newer", "error").
 local function load(player: Player): (Data?, string?)
 	local reason = "error"
-	for attempt = 1, LOAD_ATTEMPTS do
+	-- in Studio the DataStore is usually unavailable (unpublished place, API access off): fail fast instead of retrying
+	local attempts = if RunService:IsStudio() then 1 else LOAD_ATTEMPTS
+	for attempt = 1, attempts do
 		local locked = false
 		local ok, result = pcall(function()
 			return store:UpdateAsync(key(player), function(old: any)
@@ -70,7 +72,7 @@ local function load(player: Player): (Data?, string?)
 		end
 		if ok and locked then
 			reason = "locked"
-			task.wait(3)
+			task.wait(2)
 		elseif not ok then
 			PlayerDataService.errors.load += 1
 			warn(`[PlayerDataService] load attempt {attempt} for {player.Name} failed: {result}`)
@@ -79,7 +81,7 @@ local function load(player: Player): (Data?, string?)
 			if string.find(text, "publish", 1, true) or string.find(text, "studio access", 1, true) or string.find(text, "studioaccesstoapis", 1, true) then
 				return nil, "offline"
 			end
-			task.wait(2 ^ attempt)
+			task.wait(attempt)
 		end
 	end
 	return nil, reason
@@ -162,7 +164,7 @@ function PlayerDataService:Init()
 	Remotes.func("GetState").OnServerInvoke = function(player: Player)
 		-- the client asks as soon as it starts, often before the save has finished loading: wait for it
 		local waited = 0
-		while not profiles[player] and player.Parent and waited < 20 do
+		while not profiles[player] and player.Parent and waited < 30 do
 			task.wait(0.25)
 			waited += 0.25
 		end

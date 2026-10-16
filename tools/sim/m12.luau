@@ -339,4 +339,12 @@ do
 	for _, o in T.ordersOf(Q) do if o.state == "Available" then stillAvailable = true end end
 	expect(stillAvailable, "after the punishment the first order is still waiting")
 	expect(select(1, call(Q, "IntroChoice", "nonsense")) == false, "an invalid choice is refused")
+
+	-- 10. in Studio an unreachable DataStore costs one attempt, not half a minute
+	store.fail = 100
+	local studioDown = newPlayer(9500, "StudioDown")
+	local callsBefore = store.calls
+	join(studioDown)
+	store.fail = 0
+	expect(store.calls - callsBefore == 1 and T.state(studioDown) ~= nil, "Studio with a failing DataStore: one attempt, then temporary data")
 end
