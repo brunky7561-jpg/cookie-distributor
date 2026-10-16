@@ -21,6 +21,11 @@ function PhoneController:Start()
 	gui.Enabled = false
 	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
+	local toastGui = Instance.new("ScreenGui")
+	toastGui.Name = "PhoneToasts"
+	toastGui.ResetOnSpawn = false
+	toastGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
 	local toast = Instance.new("TextLabel")
 	toast.Size = UDim2.fromOffset(340, 56)
 	toast.Position = UDim2.new(1, -352, 0, 12)
@@ -30,7 +35,7 @@ function PhoneController:Start()
 	toast.TextSize = 15
 	toast.TextWrapped = true
 	toast.Visible = false
-	toast.Parent = Players.LocalPlayer.PlayerGui:FindFirstChild("HUD") or gui
+	toast.Parent = toastGui
 	local toastId = 0
 	local function say(text: string)
 		toastId += 1
