@@ -6,6 +6,9 @@ local RateLimit = {}
 
 local last: { [Player]: { [string]: number } } = {}
 
+-- Rejections since the server started, per key (read by MetricsService).
+RateLimit.rejected = {} :: { [string]: number }
+
 -- Returns true if the call is allowed. A rejected call does not reset the timer.
 function RateLimit.check(player: Player, key: string, interval: number): boolean
 	local mine = last[player]
@@ -15,6 +18,7 @@ function RateLimit.check(player: Player, key: string, interval: number): boolean
 	end
 	local now = os.clock()
 	if now - (mine[key] or -math.huge) < interval then
+		RateLimit.rejected[key] = (RateLimit.rejected[key] or 0) + 1
 		return false
 	end
 	mine[key] = now
