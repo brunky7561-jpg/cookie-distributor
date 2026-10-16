@@ -1,6 +1,9 @@
 --!strict
 -- Title screen on every load, and the opening cutscene the first time a save joins. Text comes from Config/Intro.
+local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Intro = require(ReplicatedStorage.Shared.Config.Intro)
@@ -44,9 +47,34 @@ function IntroController:Start()
 	gui.IgnoreGuiInset = true
 	gui.Parent = playerGui
 
+	-- a slowly orbiting camera over the plaza, softened with a blur, behind the menus
+	local center = Vector3.new(0, 14, 0)
+	local angle = 0
+	local blur = Instance.new("BlurEffect")
+	blur.Size = 0
+	blur.Parent = Lighting
+	TweenService:Create(blur, TweenInfo.new(1.2), { Size = 18 }):Play()
+	local orbit = RunService.RenderStepped:Connect(function(dt: number)
+		local cam = workspace.CurrentCamera
+		if not cam then
+			return
+		end
+		angle += dt * 0.1
+		local radius = 95 + math.sin(angle * 0.7) * 10
+		local height = 48 + math.sin(angle * 1.3) * 8
+		cam.CameraType = Enum.CameraType.Scriptable
+		cam.CFrame = CFrame.lookAt(center + Vector3.new(math.cos(angle) * radius, height, math.sin(angle) * radius), center)
+	end)
+
 	local generation = 0
 	local function close()
 		generation += 1
+		orbit:Disconnect()
+		local cam = workspace.CurrentCamera
+		if cam then
+			cam.CameraType = Enum.CameraType.Custom -- hand the camera back to the player's character
+		end
+		blur:Destroy()
 		gui:Destroy()
 	end
 
@@ -58,7 +86,7 @@ function IntroController:Start()
 			child:Destroy()
 		end
 		local stage = fullFrame(gui, Theme.Night)
-		UI.gradient(stage, Theme.Cocoa, Theme.Night)
+		stage.BackgroundTransparency = 0.35 -- the blurred plaza keeps turning behind the dialogue
 
 		for _, top in { true, false } do
 			local bar = Instance.new("Frame")
@@ -70,14 +98,9 @@ function IntroController:Start()
 			bar.Parent = stage
 		end
 
-		local portrait = Instance.new("TextLabel")
+		local portrait = UI.badge(stage, Intro.antagonist.portrait, 150, Theme.Coral)
 		portrait.AnchorPoint = Vector2.new(0.5, 0.5)
 		portrait.Position = UDim2.fromScale(0.5, 0.3)
-		portrait.Size = UDim2.fromOffset(160, 160)
-		portrait.BackgroundTransparency = 1
-		portrait.Text = Intro.antagonist.portrait
-		portrait.TextSize = 100 -- Roblox rejects TextSize above 100
-		portrait.Parent = stage
 
 		local box = Instance.new("Frame")
 		box.AnchorPoint = Vector2.new(0.5, 1)
@@ -176,16 +199,21 @@ function IntroController:Start()
 	end
 
 	-- title screen ---------------------------------------------------------------
-	local screen = fullFrame(gui, Theme.Peach)
-	UI.gradient(screen, Theme.Butter, Theme.Coral)
-	local col = column(screen, 440)
-	local logo = UI.label(col, "🍪", { size = 90, align = Enum.TextXAlignment.Center })
-	logo.TextSize = 90
-	UI.label(col, Intro.title.name, { bold = true, size = 46, align = Enum.TextXAlignment.Center, color = Theme.Cocoa })
-	UI.label(col, Intro.title.tagline, { size = 20, align = Enum.TextXAlignment.Center, color = Theme.Cocoa })
+	local screen = fullFrame(gui, Theme.Night)
+	screen.BackgroundTransparency = 0.45 -- the blurred, orbiting plaza shows through
+	local col = column(screen, 460)
+	local logo = UI.badge(col, "🍪", 120, Theme.Butter)
+	logo.LayoutOrder = 1
+	logo.Rotation = -8
+	-- a gentle bob so the title feels alive
+	TweenService:Create(logo, TweenInfo.new(1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Rotation = 8 }):Play()
+	local title = UI.label(col, Intro.title.name, { size = 64, align = Enum.TextXAlignment.Center, color = Theme.Cream, font = Enum.Font.FredokaOne, shadow = true })
+	title.LayoutOrder = 2
+	local tagline = UI.label(col, Intro.title.tagline, { size = 22, align = Enum.TextXAlignment.Center, color = Theme.Butter, font = Enum.Font.GothamBold, shadow = true })
+	tagline.LayoutOrder = 3
 	local play: TextButton
 	local starting = false
-	play = UI.button(col, Intro.title.playText, Theme.Cream, function()
+	play = UI.button(col, Intro.title.playText, Theme.Butter, function()
 		if starting then
 			return
 		end
@@ -199,7 +227,7 @@ function IntroController:Start()
 		end
 		local state: any = HUD.state
 		if state and not (state.milestones and state.milestones.introDone) then
-			local ok, err = pcall(cutscene)
+			local ok, err = (pcall :: any)(cutscene)
 			if not ok then
 				warn(`[Intro] the cutscene failed: {err}`)
 				close() -- never leave the player stuck on the title screen
@@ -208,7 +236,9 @@ function IntroController:Start()
 			close()
 		end
 	end)
-	UI.label(col, Intro.title.hint, { size = 14, align = Enum.TextXAlignment.Center, color = Theme.Cocoa })
+	play.LayoutOrder = 4
+	local hint = UI.label(col, Intro.title.hint, { size = 14, align = Enum.TextXAlignment.Center, color = Theme.Cream, font = Enum.Font.GothamBold, shadow = true })
+	hint.LayoutOrder = 5
 end
 
 return IntroController

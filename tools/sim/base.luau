@@ -95,10 +95,11 @@ V3mt.__sub = function(a, b) return V3(a.X - b.X, a.Y - b.Y, a.Z - b.Z) end
 V3mt.__div = function(a, n) return V3(a.X / n, a.Y / n, a.Z / n) end
 V3mt.__mul = function(a, n) return V3(a.X * n, a.Y * n, a.Z * n) end
 Vector3 = { new = V3 }
-CFrame = { new = function(p) local c = { Position = p }; function c:PointToObjectSpace(q) return q - p end return c end }
+CFrame = { lookAt = function(p) local c = { Position = p } return c end, new = function(p) local c = { Position = p }; function c:PointToObjectSpace(q) return q - p end return c end }
 Color3 = { fromHex = U, fromRGB = U, new = U }
 UDim2 = { fromOffset = U, fromScale = U, new = U }
 UDim = { new = U }
+TweenInfo = { new = U }
 Vector2 = { new = U }
 ColorSequence = { new = U }
 NumberSequence = { new = U }

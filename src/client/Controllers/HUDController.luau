@@ -66,6 +66,7 @@ local function card(parent: Instance, size: UDim2, position: UDim2): Frame
 	corner.CornerRadius = UDim.new(0, 16)
 	corner.Parent = f
 	local stroke = Instance.new("UIStroke")
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Color = Theme.Cocoa
 	stroke.Thickness = 2
 	stroke.Transparency = 0.1
@@ -99,8 +100,8 @@ local function actionButton(parent: Instance, text: string, color: Color3, pos: 
 	b.AnchorPoint = Vector2.new(1, 1)
 	b.BackgroundColor3 = color
 	b.TextColor3 = Theme.Cocoa
-	b.Font = Enum.Font.GothamBold
-	b.TextSize = 20
+	b.Font = Enum.Font.FredokaOne
+	b.TextSize = 22
 	b.Text = text
 	b.AutoButtonColor = true
 	b.Parent = parent
@@ -110,6 +111,7 @@ local function actionButton(parent: Instance, text: string, color: Color3, pos: 
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Theme.Cocoa
 	stroke.Thickness = 2.5
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border -- without this the outline is drawn around the letters
 	stroke.Parent = b
 	local grad = Instance.new("UIGradient")
 	grad.Rotation = 90
