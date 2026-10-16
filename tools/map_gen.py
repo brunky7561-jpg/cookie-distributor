@@ -324,6 +324,9 @@ def build_plaza():
     g.gable(40, 28, 18, 3, C(120, 90, 70), "Wood", over=0.5)
     # property lot
     label_marker(out, "Corner Cookie Shop Plot", 28, -68, 24, 16, "PropertyPlot", C(120, 220, 140))
+    label_marker(out, "Delivery Mat (Corner Cookie Shop)", 28, -80, 7, 7, "ReceivingArea", C(255, 196, 90))
+    label_marker(out, "Food Truck Plot", -14, -86, 16, 10, "PropertyPlot", C(120, 220, 140))
+    label_marker(out, "Delivery Mat (Food Truck)", -14, -96, 7, 7, "ReceivingArea", C(255, 196, 90))
     return folder("MarketSquare", out)
 
 
@@ -392,6 +395,7 @@ def build_maple_heights():
     for tx, tz in ((-175, -92), (-150, -88), (-100, -90), (-172, -108), (-96, -112)):
         oak(out, tx, tz, rng.uniform(0.8, 1.2), leaf=C(236, 150, 170) if rng.random() < 0.4 else None)
     label_marker(out, "Garage Kitchen Plot", -75, -110, 24, 16, "PropertyPlot", C(120, 220, 140))
+    label_marker(out, "Delivery Mat (Garage Kitchen)", -75, -124, 7, 7, "ReceivingArea", C(255, 196, 90))
     return folder("StarterRow", out)
 
 

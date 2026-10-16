@@ -48,7 +48,12 @@ export type BoxDef = {
 export type PropertyDef = {
 	id: string,
 	name: string,
+	blurb: string?,
 	price: number,
+	unlockLevel: number?,
+	display: number?,
+	walkIn: number?,
+	plotName: string?,
 	ovenSlots: number,
 	storage: number,
 	dailyCost: number,
