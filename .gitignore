@@ -6,3 +6,4 @@ Packages/
 ServerPackages/
 sourcemap.json
 .DS_Store
+!build/CookieDistributor.rbxlx

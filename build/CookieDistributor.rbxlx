@@ -1,0 +1,1518 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4"><Item class="Workspace" referent="RBX26"><Properties><string name="Name">Workspace</string></Properties><Item class="Part" referent="RBX23"><Properties><string name="Name">Baseplate</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>0</X><Y>-10</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>512</X><Y>20</Y><Z>512</Z></Vector3><Color3uint8 name="Color3uint8">4284702562</Color3uint8></Properties></Item><Item class="SpawnLocation" referent="RBX24"><Properties><string name="Name">SpawnLocation</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>0</X><Y>0.5</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>12</X><Y>1</Y><Z>12</Z></Vector3><Color3uint8 name="Color3uint8">4288914085</Color3uint8></Properties></Item><Item class="Part" referent="RBX25"><Properties><string name="Name">KitchenCounter</string><bool name="Anchored">true</bool><CoordinateFrame name="CFrame"><X>0</X><Y>2</Y><Z>-14</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame><Vector3 name="size"><X>12</X><Y>4</Y><Z>4</Z></Vector3><Color3uint8 name="Color3uint8">4291071066</Color3uint8><BinaryString name="Tags">QmFrZVN0YXRpb24=</BinaryString></Properties></Item></Item><Item class="ReplicatedStorage" referent="RBX27"><Properties><string name="Name">ReplicatedStorage</string></Properties><Item class="Folder" referent="RBX10"><Properties><string name="Name">Shared</string></Properties><Item class="Folder" referent="RBX5"><Properties><string name="Name">Config</string></Properties><Item class="ModuleScript" referent="RBX1"><Properties><string name="Name">Customers</string><ProtectedString name="Source"><![CDATA[--!strict
+local Types = require(script.Parent.Parent.Modules.Types)
+
+local Customers: { Types.CustomerTemplate } = {
+	{ id = "maya", name = "Maya", personality = "Foodie", loves = { "chocolate", "salty" }, hates = { "rare" }, cravingMin = 15, cravingMax = 40, budget = 30 },
+	{ id = "leo", name = "Leo", personality = "SugarFiend", loves = { "sweet" }, hates = { "salty" }, cravingMin = 30, cravingMax = 70, budget = 25 },
+	{ id = "dot", name = "Dot", personality = "BargainHunter", loves = { "base" }, hates = { "rare" }, cravingMin = 0, cravingMax = 30, budget = 12 },
+	{ id = "hana", name = "Hana", personality = "HealthNut", loves = { "sweet" }, hates = { "intense" }, cravingMin = 0, cravingMax = 20, budget = 25 },
+}
+
+return Customers
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX2"><Properties><string name="Name">Ingredients</string><ProtectedString name="Source"><![CDATA[--!strict
+local Types = require(script.Parent.Parent.Modules.Types)
+
+local Ingredients: { [string]: Types.Ingredient } = {
+	flour = { id = "flour", name = "Flour", category = "Base", cost = 1, craving = 0, tags = { "base" }, sideEffects = {} },
+	butter = { id = "butter", name = "Butter", category = "Fat", cost = 2, craving = 1, tags = { "fat" }, sideEffects = {} },
+	white_sugar = { id = "white_sugar", name = "White Sugar", category = "Sweetener", cost = 1, craving = 2, tags = { "sweet" }, sideEffects = {} },
+	brown_sugar = { id = "brown_sugar", name = "Brown Sugar", category = "Sweetener", cost = 2, craving = 2, tags = { "sweet" }, sideEffects = {} },
+	chocolate_chips = { id = "chocolate_chips", name = "Chocolate Chips", category = "Add-in", cost = 3, craving = 6, tags = { "chocolate" }, sideEffects = {} },
+	sea_salt = { id = "sea_salt", name = "Sea Salt", category = "Booster", cost = 1, craving = 4, tags = { "salty" }, sideEffects = {} },
+	caramel = { id = "caramel", name = "Caramel", category = "Sweetener", cost = 4, craving = 8, tags = { "sweet" }, sideEffects = { "Crash" } },
+	espresso_powder = { id = "espresso_powder", name = "Espresso Powder", category = "Booster", cost = 5, craving = 10, tags = { "energy" }, sideEffects = { "Energized" } },
+	golden_honey = { id = "golden_honey", name = "Golden Honey", category = "Rare", cost = 25, craving = 15, tags = { "sweet", "rare" }, sideEffects = { "Cozy" } },
+	moon_sugar = { id = "moon_sugar", name = "Moon Sugar", category = "Rare", cost = 40, craving = 22, tags = { "rare", "intense" }, sideEffects = { "Sugar Rush" } },
+}
+
+return Ingredients
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX3"><Properties><string name="Name">Properties</string><ProtectedString name="Source"><![CDATA[--!strict
+local Types = require(script.Parent.Parent.Modules.Types)
+
+local Properties: { [string]: Types.PropertyDef } = {
+	apartment = { id = "apartment", name = "Starter Apartment", price = 0, ovenSlots = 1, storage = 20, dailyCost = 0 },
+	food_truck = { id = "food_truck", name = "Food Truck", price = 2500, ovenSlots = 1, storage = 40, dailyCost = 20 },
+	garage = { id = "garage", name = "Garage Kitchen", price = 8000, ovenSlots = 3, storage = 100, dailyCost = 60 },
+}
+
+return Properties
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX4"><Properties><string name="Name">Recipes</string><ProtectedString name="Source"><![CDATA[--!strict
+local Types = require(script.Parent.Parent.Modules.Types)
+
+local Recipes = {
+	synergies = {
+		{ a = "chocolate", b = "salty", multiplier = 1.3 },
+		{ a = "energy", b = "sweet", multiplier = 1.2 },
+	} :: { Types.Synergy },
+	-- Hidden combos (discovered by experimenting): sorted ingredient ids -> name
+	hidden = {
+		["brown_sugar+butter+flour"] = "Classic Dough",
+	} :: { [string]: string },
+}
+
+return Recipes
+]]></ProtectedString></Properties></Item></Item><Item class="Folder" referent="RBX9"><Properties><string name="Name">Modules</string></Properties><Item class="ModuleScript" referent="RBX6"><Properties><string name="Name">CravingCalc</string><ProtectedString name="Source"><![CDATA[--!strict
+-- Pure function: ingredient ids + bake quality -> Craving score. Shared so UI can preview it.
+local Ingredients = require(script.Parent.Parent.Config.Ingredients)
+local Recipes = require(script.Parent.Parent.Config.Recipes)
+
+local CravingCalc = {}
+
+local DIMINISHING = 0.75 -- each repeat of the same ingredient adds 75% of the previous
+
+function CravingCalc.compute(ingredientIds: { string }, quality: number): { score: number, effects: { string } }
+	local seen: { [string]: number } = {}
+	local tags: { [string]: boolean } = {}
+	local effects: { [string]: boolean } = {}
+	local total = 0
+
+	for _, id in ingredientIds do
+		local ing = Ingredients[id]
+		if not ing then
+			continue
+		end
+		local n = seen[id] or 0
+		seen[id] = n + 1
+		total += ing.craving * DIMINISHING ^ n
+		for _, t in ing.tags do
+			tags[t] = true
+		end
+		for _, e in ing.sideEffects do
+			effects[e] = true
+		end
+	end
+
+	for _, syn in Recipes.synergies do
+		if tags[syn.a] and tags[syn.b] then
+			total *= syn.multiplier
+		end
+	end
+
+	-- quality is 0..1; a perfect bake gets x1.2, a burnt one x0.5
+	local mult = 0.5 + 0.7 * math.clamp(quality, 0, 1)
+	local score = math.clamp(math.round(total * mult), 0, 100)
+
+	local list = {}
+	for e in effects do
+		table.insert(list, e)
+	end
+	table.sort(list)
+	return { score = score, effects = list }
+end
+
+return CravingCalc
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX7"><Properties><string name="Name">Remotes</string><ProtectedString name="Source"><![CDATA[--!strict
+-- Server creates remotes on first request; client waits for them. Same call on both sides.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local Remotes = {}
+
+local function folder(): Folder
+	local f = ReplicatedStorage:FindFirstChild("Remotes")
+	if f then
+		return f :: Folder
+	end
+	if RunService:IsServer() then
+		local new = Instance.new("Folder")
+		new.Name = "Remotes"
+		new.Parent = ReplicatedStorage
+		return new
+	end
+	return ReplicatedStorage:WaitForChild("Remotes") :: Folder
+end
+
+local function get(name: string, className: string): Instance
+	local f = folder()
+	local existing = f:FindFirstChild(name)
+	if existing then
+		return existing
+	end
+	if RunService:IsServer() then
+		local r = Instance.new(className)
+		r.Name = name
+		r.Parent = f
+		return r
+	end
+	return f:WaitForChild(name)
+end
+
+function Remotes.event(name: string): RemoteEvent
+	return get(name, "RemoteEvent") :: RemoteEvent
+end
+
+function Remotes.func(name: string): RemoteFunction
+	return get(name, "RemoteFunction") :: RemoteFunction
+end
+
+return Remotes
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX8"><Properties><string name="Name">Types</string><ProtectedString name="Source"><![CDATA[--!strict
+export type Ingredient = {
+	id: string,
+	name: string,
+	category: string,
+	cost: number,
+	craving: number,
+	tags: { string },
+	sideEffects: { string },
+}
+
+export type Synergy = {
+	a: string,
+	b: string,
+	multiplier: number,
+}
+
+export type Personality = "Foodie" | "BargainHunter" | "SugarFiend" | "HealthNut" | "Trendsetter" | "Grump"
+
+export type CustomerTemplate = {
+	id: string,
+	name: string,
+	personality: Personality,
+	loves: { string },
+	hates: { string },
+	cravingMin: number,
+	cravingMax: number,
+	budget: number,
+}
+
+export type PropertyDef = {
+	id: string,
+	name: string,
+	price: number,
+	ovenSlots: number,
+	storage: number,
+	dailyCost: number,
+}
+
+return {}
+]]></ProtectedString></Properties></Item></Item></Item></Item><Item class="ServerScriptService" referent="RBX28"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="Script" referent="RBX16"><Properties><string name="Name">Server</string><ProtectedString name="Source"><![CDATA[--!strict
+-- Loads every ModuleScript in Services and calls :Init() then :Start() on each.
+local services = script:WaitForChild("Services")
+
+local loaded = {}
+for _, module in services:GetChildren() do
+	if module:IsA("ModuleScript") then
+		local ok, svc = pcall(require, module)
+		if ok then
+			table.insert(loaded, { name = module.Name, svc = svc })
+		else
+			warn(`[Server] failed to load {module.Name}: {svc}`)
+		end
+	end
+end
+
+for _, entry in loaded do
+	if type(entry.svc) == "table" and entry.svc.Init then
+		entry.svc:Init()
+	end
+end
+for _, entry in loaded do
+	if type(entry.svc) == "table" and entry.svc.Start then
+		task.spawn(entry.svc.Start, entry.svc)
+	end
+end
+
+print(`[Server] started {#loaded} services`)
+]]></ProtectedString></Properties><Item class="Folder" referent="RBX15"><Properties><string name="Name">Services</string></Properties><Item class="ModuleScript" referent="RBX11"><Properties><string name="Name">BakingService</string><ProtectedString name="Source"><![CDATA[--!strict
+-- Server-side baking: validates ingredients, times the mix and oven steps itself, and creates batches.
+-- The client only draws the bars; it can never send a quality or a Craving score.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+
+local Ingredients = require(ReplicatedStorage.Shared.Config.Ingredients)
+local Recipes = require(ReplicatedStorage.Shared.Config.Recipes)
+local CravingCalc = require(ReplicatedStorage.Shared.Modules.CravingCalc)
+local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
+local DataService = require(script.Parent.DataService)
+local EconomyService = require(script.Parent.EconomyService)
+
+local MAX_INGREDIENTS = 8
+local COOKIES_PER_BATCH = 6
+local MIX_IDEAL = 4 -- seconds of mixing for a perfect result
+local OVEN_BASE = 6 -- seconds, plus 0.5 per ingredient
+local MAX_BATCHES_STORED = 30
+
+type Session = {
+	ingredients: { string },
+	stage: "mixing" | "mixed" | "baking",
+	t0: number,
+	mixScore: number,
+}
+
+local sessions: { [Player]: Session } = {}
+
+local BakingService = {}
+
+local function score(elapsed: number, ideal: number): number
+	return math.clamp(1 - math.abs(elapsed - ideal) / ideal, 0, 1)
+end
+
+local function recipeName(ids: { string }): string
+	local unique: { [string]: boolean } = {}
+	for _, id in ids do
+		unique[id] = true
+	end
+	local list = {}
+	for id in unique do
+		table.insert(list, id)
+	end
+	table.sort(list)
+	return Recipes.hidden[table.concat(list, "+")] or "Custom Cookies"
+end
+
+local function ovenIdeal(session: Session): number
+	return OVEN_BASE + 0.5 * #session.ingredients
+end
+
+function BakingService:Init()
+	Remotes.func("BakeStart").OnServerInvoke = function(player: Player, picked: any)
+		local data = DataService:Get(player)
+		if not data or sessions[player] or type(picked) ~= "table" then
+			return false, "cannot start a bake right now"
+		end
+		if #picked < 1 or #picked > MAX_INGREDIENTS then
+			return false, `pick 1 to {MAX_INGREDIENTS} ingredients`
+		end
+
+		local need: { [string]: number } = {}
+		local hasBase = false
+		for _, id in picked do
+			if type(id) ~= "string" or not Ingredients[id] then
+				return false, "unknown ingredient"
+			end
+			need[id] = (need[id] or 0) + 1
+			if table.find(Ingredients[id].tags, "base") then
+				hasBase = true
+			end
+		end
+		if not hasBase then
+			return false, "you need a base like flour"
+		end
+		for id, n in need do
+			if (data.ingredients[id] or 0) < n then
+				return false, `not enough {Ingredients[id].name}`
+			end
+		end
+		if #data.batches >= MAX_BATCHES_STORED then
+			return false, "storage is full, sell some cookies first"
+		end
+
+		for id, n in need do
+			data.ingredients[id] -= n
+		end
+		DataService:Replicate(player)
+
+		local ids: { string } = table.clone(picked)
+		sessions[player] = { ingredients = ids, stage = "mixing", t0 = os.clock(), mixScore = 0 }
+		return true, { mixIdeal = MIX_IDEAL, ovenIdeal = OVEN_BASE + 0.5 * #ids }
+	end
+
+	Remotes.func("MixStop").OnServerInvoke = function(player: Player)
+		local s = sessions[player]
+		if not s or s.stage ~= "mixing" then
+			return false
+		end
+		s.mixScore = score(os.clock() - s.t0, MIX_IDEAL)
+		s.stage = "mixed"
+		return true, s.mixScore
+	end
+
+	Remotes.func("OvenStart").OnServerInvoke = function(player: Player)
+		local s = sessions[player]
+		if not s or s.stage ~= "mixed" then
+			return false
+		end
+		s.stage = "baking"
+		s.t0 = os.clock()
+		return true
+	end
+
+	Remotes.func("OvenPull").OnServerInvoke = function(player: Player)
+		local s = sessions[player]
+		local data = DataService:Get(player)
+		if not s or s.stage ~= "baking" or not data then
+			return false
+		end
+		sessions[player] = nil
+
+		local ovenScore = score(os.clock() - s.t0, ovenIdeal(s))
+		local quality = s.mixScore * 0.4 + ovenScore * 0.6
+		local result = CravingCalc.compute(s.ingredients, quality)
+
+		local tagSet: { [string]: boolean } = {}
+		for _, id in s.ingredients do
+			for _, t in Ingredients[id].tags do
+				tagSet[t] = true
+			end
+		end
+		local tags = {}
+		for t in tagSet do
+			table.insert(tags, t)
+		end
+		table.sort(tags)
+
+		local name = recipeName(s.ingredients)
+		local batch = {
+			id = data.nextBatchId,
+			name = name,
+			ingredients = s.ingredients,
+			tags = tags,
+			quality = quality,
+			craving = result.score,
+			effects = result.effects,
+			count = COOKIES_PER_BATCH,
+		}
+		data.nextBatchId += 1
+		table.insert(data.batches, batch)
+		if name ~= "Custom Cookies" and not data.recipes[name] then
+			data.recipes[name] = true
+			EconomyService:AddXp(player, 25) -- discovery bonus
+		end
+		EconomyService:AddXp(player, math.floor(5 + quality * 15))
+		DataService:Replicate(player)
+		return true, batch
+	end
+
+	Players.PlayerRemoving:Connect(function(p)
+		sessions[p] = nil
+	end)
+end
+
+function BakingService:Start() end
+
+return BakingService
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX12"><Properties><string name="Name">CustomerService</string><ProtectedString name="Source"><![CDATA[--!strict
+-- Customers text you orders; you deliver batches and they react based on taste, Craving and quality.
+-- Delivery is a phone "hand over" for now. Walking to meetup spots comes with the world build.
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local CustomerTemplates = require(ReplicatedStorage.Shared.Config.Customers)
+local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
+local DataService = require(script.Parent.DataService)
+local EconomyService = require(script.Parent.EconomyService)
+
+local ORDER_INTERVAL = 30 -- seconds between new orders per player
+local MAX_ACTIVE_ORDERS = 3
+local ORDER_LIFETIME = 300 -- seconds before an order expires
+local GHOST_SECONDS = 180
+local BURNOUT_LIMIT = 10
+local REL_LEVELS = { { 0, "Stranger" }, { 10, "Customer" }, { 30, "Regular" }, { 70, "Fan" }, { 150, "Superfan" } }
+
+local ORDER_TEXT: { [string]: string } = {
+	Foodie = "Hi! I'd love {count} really well-made cookies. Quality matters to me.",
+	BargainHunter = "Hey, got a deal on {count} cookies? Nothing fancy.",
+	SugarFiend = "I NEED {count} cookies. The sweeter the better!",
+	HealthNut = "Could I get {count} not-too-sweet cookies? Thanks!",
+	Trendsetter = "Make me {count} cookies nobody has tried yet!",
+	Grump = "{count} cookies. Don't disappoint me.",
+}
+
+local REACTIONS = {
+	great = { "Oh wow. These are perfect.", "Okay, you've outdone yourself.", "I'm telling everyone about you." },
+	ok = { "These are pretty good.", "Not bad at all.", "Thanks, that hits the spot." },
+	bad = { "Hmm. Not really what I wanted.", "These aren't great.", "I expected better." },
+}
+
+type Order = {
+	id: number,
+	customerId: string,
+	count: number,
+	offer: number,
+	expires: number,
+}
+
+local orders: { [Player]: { [number]: Order } } = {}
+local nextOrderId = 1
+local templatesById: { [string]: any } = {}
+for _, t in CustomerTemplates do
+	templatesById[t.id] = t
+end
+
+local CustomerService = {}
+
+local function relLevel(points: number): string
+	local name = REL_LEVELS[1][2]
+	for _, entry in REL_LEVELS do
+		if points >= entry[1] then
+			name = entry[2]
+		end
+	end
+	return name
+end
+
+local function customerState(data: any, id: string): any
+	local s = data.customers[id]
+	if not s then
+		s = { rel = 0, hooked = 0, burnout = 0, ghostUntil = 0, memory = {} }
+		data.customers[id] = s
+	end
+	return s
+end
+
+local function activeFor(player: Player): { [number]: Order }
+	local t = orders[player]
+	if not t then
+		t = {}
+		orders[player] = t
+	end
+	return t
+end
+
+local function view(order: Order): any
+	local t = templatesById[order.customerId]
+	return {
+		id = order.id,
+		customerName = t.name,
+		personality = t.personality,
+		text = (ORDER_TEXT[t.personality] :: string):gsub("{count}", tostring(order.count)),
+		count = order.count,
+		offer = order.offer,
+		expires = order.expires,
+	}
+end
+
+local function spawnOrder(player: Player)
+	local data = DataService:Get(player)
+	if not data then
+		return
+	end
+	local active = activeFor(player)
+	local activeCount, busy = 0, {}
+	for _, o in active do
+		activeCount += 1
+		busy[o.customerId] = true
+	end
+	if activeCount >= MAX_ACTIVE_ORDERS then
+		return
+	end
+	local pool = {}
+	for _, t in CustomerTemplates do
+		local s = customerState(data, t.id)
+		if not busy[t.id] and os.time() >= s.ghostUntil then
+			table.insert(pool, t)
+		end
+	end
+	if #pool == 0 then
+		return
+	end
+	local t = pool[math.random(#pool)]
+	local count = math.random(2, 6)
+	local order: Order = {
+		id = nextOrderId,
+		customerId = t.id,
+		count = count,
+		offer = math.floor(count * t.budget / 6 + 0.5) + 3,
+		expires = os.time() + ORDER_LIFETIME,
+	}
+	nextOrderId += 1
+	active[order.id] = order
+	Remotes.event("OrderReceived"):FireClient(player, view(order))
+end
+
+local function satisfaction(batch: any, t: any, state: any): (number, number)
+	local taste = 0.6
+	for _, tag in t.loves do
+		if table.find(batch.tags, tag) then
+			taste += 0.2
+		end
+	end
+	for _, tag in t.hates do
+		if table.find(batch.tags, tag) then
+			taste -= 0.4
+		end
+	end
+	taste = math.clamp(taste, 0, 1)
+
+	local fit = 1
+	local over = 0
+	if batch.craving < t.cravingMin then
+		fit = math.clamp(1 - (t.cravingMin - batch.craving) / 30, 0, 1)
+	elseif batch.craving > t.cravingMax then
+		over = batch.craving - t.cravingMax
+		fit = math.clamp(1 - over / 30, 0, 1)
+	end
+	local sat = 0.4 * taste + 0.3 * fit + 0.3 * batch.quality
+	return sat, over
+end
+
+function CustomerService:Init()
+	Remotes.func("DeliverOrder").OnServerInvoke = function(player: Player, orderId: any, batchId: any)
+		local data = DataService:Get(player)
+		local order = if type(orderId) == "number" then activeFor(player)[orderId] else nil
+		if not data or not order or type(batchId) ~= "number" then
+			return false, "that order is gone"
+		end
+		local index
+		for i, b in data.batches do
+			if b.id == batchId then
+				index = i
+			end
+		end
+		if not index then
+			return false, "pick a batch to deliver"
+		end
+		local batch = data.batches[index]
+		if batch.count < order.count then
+			return false, `they want {order.count} cookies, that batch only has {batch.count}`
+		end
+
+		batch.count -= order.count
+		if batch.count <= 0 then
+			table.remove(data.batches, index)
+		end
+		activeFor(player)[orderId] = nil
+
+		local t = templatesById[order.customerId]
+		local state = customerState(data, t.id)
+		local sat, over = satisfaction(batch, t, state)
+
+		local pay = math.floor(order.offer * (0.5 + sat) + 0.5)
+		if sat > 0.85 then
+			pay += math.floor(order.offer * 0.2)
+		end
+		EconomyService:AddCash(player, pay)
+		EconomyService:AddXp(player, math.floor(10 + sat * 20))
+
+		state.rel = math.max(0, state.rel + math.floor(sat * 10) - 4)
+		state.hooked = math.min(100, state.hooked + batch.craving / 10)
+		if over > 0 then
+			state.burnout += over / 5
+		else
+			state.burnout = math.max(0, state.burnout - 1)
+		end
+		local ghosted = false
+		if state.burnout >= BURNOUT_LIMIT then
+			state.ghostUntil = os.time() + GHOST_SECONDS
+			state.burnout = 0
+			ghosted = true
+		end
+		table.insert(state.memory, { name = batch.name, quality = batch.quality, craving = batch.craving, sat = sat })
+		if #state.memory > 5 then
+			table.remove(state.memory, 1)
+		end
+
+		local pool = if sat > 0.75 then REACTIONS.great elseif sat > 0.45 then REACTIONS.ok else REACTIONS.bad
+		DataService:Replicate(player)
+		return true, {
+			customerName = t.name,
+			pay = pay,
+			satisfaction = sat,
+			reaction = pool[math.random(#pool)],
+			relationship = relLevel(state.rel),
+			ghosted = ghosted,
+		}
+	end
+
+	Remotes.func("DeclineOrder").OnServerInvoke = function(player: Player, orderId: any)
+		local data = DataService:Get(player)
+		local order = if type(orderId) == "number" then activeFor(player)[orderId] else nil
+		if not data or not order then
+			return false
+		end
+		activeFor(player)[orderId] = nil
+		local state = customerState(data, order.customerId)
+		state.rel = math.max(0, state.rel - 1)
+		DataService:Replicate(player)
+		return true
+	end
+
+	Players.PlayerRemoving:Connect(function(p)
+		orders[p] = nil
+	end)
+end
+
+function CustomerService:Start()
+	while true do
+		task.wait(ORDER_INTERVAL)
+		for _, player in Players:GetPlayers() do
+			local active = activeFor(player)
+			for id, o in active do
+				if os.time() >= o.expires then
+					active[id] = nil
+					local data = DataService:Get(player)
+					if data then
+						local s = customerState(data, o.customerId)
+						s.rel = math.max(0, s.rel - 1)
+					end
+					Remotes.event("OrderExpired"):FireClient(player, id)
+				end
+			end
+			spawnOrder(player)
+		end
+	end
+end
+
+return CustomerService
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX13"><Properties><string name="Name">DataService</string><ProtectedString name="Source"><![CDATA[--!strict
+-- Per-player saved data with a simple session lock so two servers never write the same profile.
+local DataStoreService = game:GetService("DataStoreService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
+
+local STORE_NAME = "CookieDistributor_v1"
+local LOCK_TIMEOUT = 120 -- seconds before a dead server's lock is ignored
+local AUTOSAVE_INTERVAL = 60
+
+export type Data = {
+	cash: number,
+	level: number,
+	xp: number,
+	ingredients: { [string]: number },
+	batches: { any },
+	recipes: { [string]: boolean },
+	properties: { [string]: boolean },
+	customers: { [string]: any },
+	nextBatchId: number,
+}
+
+local DataService = {}
+
+local store = DataStoreService:GetDataStore(STORE_NAME)
+local profiles: { [Player]: Data } = {}
+local unsaved: { [Player]: boolean } = {} -- profiles that failed to load: never overwrite the real save
+local changedEvent = Instance.new("BindableEvent")
+DataService.Changed = changedEvent.Event :: RBXScriptSignal
+
+local stateRemote = Remotes.event("StateUpdated")
+
+local function defaultData(): Data
+	return {
+		cash = 50,
+		level = 1,
+		xp = 0,
+		ingredients = { flour = 4, butter = 2, white_sugar = 2 },
+		batches = {},
+		recipes = {},
+		properties = { apartment = true },
+		customers = {},
+		nextBatchId = 1,
+	}
+end
+
+local function reconcile(data: any): Data
+	local defaults = defaultData() :: any
+	for k, v in defaults do
+		if data[k] == nil then
+			data[k] = v
+		end
+	end
+	return data
+end
+
+local function key(player: Player): string
+	return `Player_{player.UserId}`
+end
+
+local function load(player: Player): Data?
+	for attempt = 1, 4 do
+		local locked = false
+		local ok, result = pcall(function()
+			return store:UpdateAsync(key(player), function(old: any)
+				if old and old.lock and old.lock.jobId ~= game.JobId and os.time() - old.lock.time < LOCK_TIMEOUT then
+					locked = true
+					return nil
+				end
+				local record = old or {}
+				record.lock = { jobId = game.JobId, time = os.time() }
+				return record
+			end)
+		end)
+		if ok and result then
+			return reconcile(result.data or {})
+		end
+		if ok and locked then
+			task.wait(3)
+		elseif not ok then
+			warn(`[DataService] load attempt {attempt} failed: {result}`)
+			task.wait(2 ^ attempt)
+		end
+	end
+	return nil
+end
+
+local function save(player: Player, release: boolean): boolean
+	local data = profiles[player]
+	if not data or unsaved[player] then
+		return false
+	end
+	local ok, err = pcall(function()
+		store:UpdateAsync(key(player), function(old: any)
+			if old and old.lock and old.lock.jobId ~= game.JobId then
+				return nil -- another server took over; do not overwrite
+			end
+			return { data = data, lock = if release then nil else { jobId = game.JobId, time = os.time() } }
+		end)
+	end)
+	if not ok then
+		warn(`[DataService] save failed for {player.Name}: {err}`)
+	end
+	return ok
+end
+
+function DataService:Get(player: Player): Data?
+	return profiles[player]
+end
+
+-- Call after any change so the client UI and other services stay in sync.
+function DataService:Replicate(player: Player)
+	local data = profiles[player]
+	if data then
+		stateRemote:FireClient(player, data)
+		changedEvent:Fire(player)
+	end
+end
+
+local function onJoin(player: Player)
+	local data = load(player)
+	if not player.Parent then
+		return
+	end
+	if not data then
+		warn(`[DataService] could not load {player.Name}; using temporary data that will NOT be saved`)
+		data = defaultData()
+		unsaved[player] = true
+	end
+	profiles[player] = data
+	DataService:Replicate(player)
+end
+
+local function onLeave(player: Player)
+	save(player, true)
+	profiles[player] = nil
+	unsaved[player] = nil
+end
+
+function DataService:Init()
+	Remotes.func("GetState").OnServerInvoke = function(player: Player)
+		return profiles[player]
+	end
+end
+
+function DataService:Start()
+	Players.PlayerAdded:Connect(function(p)
+		task.spawn(onJoin, p)
+	end)
+	Players.PlayerRemoving:Connect(onLeave)
+	for _, p in Players:GetPlayers() do
+		task.spawn(onJoin, p)
+	end
+
+	task.spawn(function()
+		while true do
+			task.wait(AUTOSAVE_INTERVAL)
+			for p in profiles do
+				task.spawn(save, p, false)
+			end
+		end
+	end)
+
+	game:BindToClose(function()
+		if RunService:IsStudio() then
+			return
+		end
+		for p in profiles do
+			task.spawn(save, p, true)
+		end
+		task.wait(3)
+	end)
+end
+
+return DataService
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX14"><Properties><string name="Name">EconomyService</string><ProtectedString name="Source"><![CDATA[--!strict
+-- Owns cash, XP and the ingredient shop. All amounts are validated here, never on the client.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Ingredients = require(ReplicatedStorage.Shared.Config.Ingredients)
+local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
+local DataService = require(script.Parent.DataService)
+
+local MAX_BUY = 50
+local XP_PER_LEVEL = 100 -- level n needs n * XP_PER_LEVEL to reach n + 1
+local RARE_UNLOCK_LEVEL = 5
+
+local EconomyService = {}
+
+function EconomyService:AddCash(player: Player, amount: number)
+	local data = DataService:Get(player)
+	if data then
+		data.cash += amount
+		DataService:Replicate(player)
+	end
+end
+
+function EconomyService:TrySpend(player: Player, amount: number): boolean
+	local data = DataService:Get(player)
+	if not data or amount < 0 or data.cash < amount then
+		return false
+	end
+	data.cash -= amount
+	DataService:Replicate(player)
+	return true
+end
+
+function EconomyService:AddXp(player: Player, amount: number)
+	local data = DataService:Get(player)
+	if not data then
+		return
+	end
+	data.xp += amount
+	while data.xp >= data.level * XP_PER_LEVEL do
+		data.xp -= data.level * XP_PER_LEVEL
+		data.level += 1
+	end
+	DataService:Replicate(player)
+end
+
+function EconomyService:Init()
+	Remotes.func("BuyIngredient").OnServerInvoke = function(player: Player, id: any, qty: any)
+		if type(id) ~= "string" or type(qty) ~= "number" then
+			return false, "bad request"
+		end
+		qty = math.floor(qty)
+		local ing = Ingredients[id]
+		local data = DataService:Get(player)
+		if not ing or not data or qty < 1 or qty > MAX_BUY then
+			return false, "bad request"
+		end
+		if table.find(ing.tags, "rare") and data.level < RARE_UNLOCK_LEVEL then
+			return false, `rare ingredients unlock at level {RARE_UNLOCK_LEVEL}`
+		end
+		if not EconomyService:TrySpend(player, ing.cost * qty) then
+			return false, "not enough cash"
+		end
+		data.ingredients[id] = (data.ingredients[id] or 0) + qty
+		DataService:Replicate(player)
+		return true
+	end
+end
+
+function EconomyService:Start() end
+
+return EconomyService
+]]></ProtectedString></Properties></Item></Item></Item></Item><Item class="StarterPlayer" referent="RBX30"><Properties><string name="Name">StarterPlayer</string></Properties><Item class="StarterPlayerScripts" referent="RBX29"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="LocalScript" referent="RBX22"><Properties><string name="Name">Client</string><ProtectedString name="Source"><![CDATA[--!strict
+-- Loads every ModuleScript in Controllers and calls :Init() then :Start() on each.
+local controllers = script:WaitForChild("Controllers")
+
+local loaded = {}
+for _, module in controllers:GetChildren() do
+	if module:IsA("ModuleScript") then
+		local ok, c = pcall(require, module)
+		if ok then
+			table.insert(loaded, { name = module.Name, c = c })
+		else
+			warn(`[Client] failed to load {module.Name}: {c}`)
+		end
+	end
+end
+
+for _, entry in loaded do
+	if type(entry.c) == "table" and entry.c.Init then
+		entry.c:Init()
+	end
+end
+for _, entry in loaded do
+	if type(entry.c) == "table" and entry.c.Start then
+		task.spawn(entry.c.Start, entry.c)
+	end
+end
+
+print(`[Client] started {#loaded} controllers`)
+]]></ProtectedString></Properties><Item class="Folder" referent="RBX21"><Properties><string name="Name">Controllers</string></Properties><Item class="ModuleScript" referent="RBX17"><Properties><string name="Name">BakeController</string><ProtectedString name="Source"><![CDATA[--!strict
+-- Baking UI: pick ingredients, then stop the mixer and pull the tray at the right moment.
+-- Open with K, or by using a ProximityPrompt on any Part tagged "BakeStation" in Workspace.
+local CollectionService = game:GetService("CollectionService")
+local ContextActionService = game:GetService("ContextActionService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local Ingredients = require(ReplicatedStorage.Shared.Config.Ingredients)
+local CravingCalc = require(ReplicatedStorage.Shared.Modules.CravingCalc)
+local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
+local HUD = require(script.Parent.HUD)
+
+local BakeController = {}
+
+local BROWN = Color3.fromRGB(94, 64, 40)
+local CREAM = Color3.fromRGB(255, 232, 190)
+local MAX_INGREDIENTS = 8
+
+local function label(parent: Instance, text: string, height: number): TextLabel
+	local l = Instance.new("TextLabel")
+	l.Size = UDim2.new(1, -12, 0, height)
+	l.BackgroundTransparency = 1
+	l.TextColor3 = CREAM
+	l.Font = Enum.Font.GothamBold
+	l.TextSize = 16
+	l.TextWrapped = true
+	l.Text = text
+	l.Parent = parent
+	return l
+end
+
+local function button(parent: Instance, text: string): TextButton
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(1, -12, 0, 36)
+	b.BackgroundColor3 = BROWN
+	b.TextColor3 = Color3.new(1, 1, 1)
+	b.Font = Enum.Font.Gotham
+	b.TextSize = 16
+	b.Text = text
+	b.Parent = parent
+	return b
+end
+
+function BakeController:Init() end
+
+function BakeController:Start()
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "Bake"
+	gui.ResetOnSpawn = false
+	gui.Enabled = false
+	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.fromOffset(380, 460)
+	frame.Position = UDim2.new(0.5, -190, 0.5, -230)
+	frame.BackgroundColor3 = Color3.fromRGB(40, 28, 20)
+	frame.Parent = gui
+	Instance.new("UICorner").Parent = frame
+	local layout = Instance.new("UIListLayout")
+	layout.Padding = UDim.new(0, 4)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Parent = frame
+
+	local bake = {
+		start = Remotes.func("BakeStart"),
+		mixStop = Remotes.func("MixStop"),
+		ovenStart = Remotes.func("OvenStart"),
+		ovenPull = Remotes.func("OvenPull"),
+	}
+
+	local busy = false
+
+	local function clear()
+		for _, c in frame:GetChildren() do
+			if not c:IsA("UIListLayout") and not c:IsA("UICorner") then
+				c:Destroy()
+			end
+		end
+	end
+
+	-- A bar that fills over 2 * ideal seconds with a green zone at the halfway mark.
+	local function timingBar(ideal: number, text: string, onStop: () -> ())
+		clear()
+		label(frame, text, 40)
+		local bar = Instance.new("Frame")
+		bar.Size = UDim2.new(1, -12, 0, 28)
+		bar.BackgroundColor3 = Color3.fromRGB(70, 50, 36)
+		bar.Parent = frame
+		local zone = Instance.new("Frame")
+		zone.Size = UDim2.fromScale(0.24, 1)
+		zone.Position = UDim2.fromScale(0.38, 0)
+		zone.BackgroundColor3 = Color3.fromRGB(90, 190, 90)
+		zone.BorderSizePixel = 0
+		zone.Parent = bar
+		local fill = Instance.new("Frame")
+		fill.Size = UDim2.fromScale(0, 1)
+		fill.BackgroundColor3 = Color3.fromRGB(255, 190, 60)
+		fill.BackgroundTransparency = 0.4
+		fill.BorderSizePixel = 0
+		fill.Parent = bar
+
+		local stop = button(frame, "Stop!")
+		local t0 = os.clock()
+		local conn = RunService.RenderStepped:Connect(function()
+			fill.Size = UDim2.fromScale(math.clamp((os.clock() - t0) / (ideal * 2), 0, 1), 1)
+		end)
+		stop.Activated:Once(function()
+			conn:Disconnect()
+			onStop()
+		end)
+	end
+
+	local showPicker
+
+	local function showResult(batch: any)
+		clear()
+		label(frame, `{batch.name}`, 30)
+		label(frame, `Quality {math.floor(batch.quality * 100)}%   Craving {batch.craving}`, 24)
+		label(frame, `Effects: {if #batch.effects > 0 then table.concat(batch.effects, ", ") else "none"}`, 24)
+		label(frame, `{batch.count} cookies added to your inventory`, 24)
+		local again = button(frame, "Bake again")
+		again.Activated:Once(function()
+			busy = false
+			showPicker()
+		end)
+	end
+
+	local function runBake(picked: { string })
+		busy = true
+		local ok, info = bake.start:InvokeServer(picked)
+		if not ok then
+			busy = false
+			showPicker(tostring(info))
+			return
+		end
+		timingBar(info.mixIdeal, "Mix! Stop in the green zone.", function()
+			bake.mixStop:InvokeServer()
+			clear()
+			label(frame, "Dough is ready.", 30)
+			local go = button(frame, "Put in oven")
+			go.Activated:Once(function()
+				bake.ovenStart:InvokeServer()
+				timingBar(info.ovenIdeal, "Baking... pull the tray in the green zone.", function()
+					local pulled, batch = bake.ovenPull:InvokeServer()
+					if pulled then
+						showResult(batch)
+					else
+						busy = false
+						showPicker("something went wrong with that batch")
+					end
+				end)
+			end)
+		end)
+	end
+
+	function showPicker(message: string?)
+		clear()
+		label(frame, message or "Pick ingredients (tap to add, up to 8)", 36)
+		local counts: { [string]: number } = {}
+		local picked: { string } = {}
+		local preview = label(frame, "", 40)
+		preview.LayoutOrder = 1000
+
+		local function refresh()
+			if #picked == 0 then
+				preview.Text = "Nothing selected"
+				return
+			end
+			local r = CravingCalc.compute(picked, 0.85)
+			preview.Text = `{#picked}/{MAX_INGREDIENTS} picked   Craving ~{r.score}`
+		end
+
+		local state = HUD.state
+		local ids = {}
+		for id in Ingredients do
+			table.insert(ids, id)
+		end
+		table.sort(ids)
+		for _, id in ids do
+			local have = if state then state.ingredients[id] or 0 else 0
+			if have > 0 then
+				local b = button(frame, "")
+				local function text()
+					b.Text = `{Ingredients[id].name}   picked {counts[id] or 0} / have {have}`
+				end
+				text()
+				b.Activated:Connect(function()
+					if (counts[id] or 0) >= have or #picked >= MAX_INGREDIENTS then
+						-- tap past the limit to remove one instead
+						if (counts[id] or 0) > 0 then
+							counts[id] -= 1
+							table.remove(picked, table.find(picked, id) :: number)
+						end
+					else
+						counts[id] = (counts[id] or 0) + 1
+						table.insert(picked, id)
+					end
+					text()
+					refresh()
+				end)
+			end
+		end
+		refresh()
+		local go = button(frame, "Start baking")
+		go.LayoutOrder = 1001
+		go.Activated:Once(function()
+			if #picked > 0 and not busy then
+				runBake(picked)
+			else
+				showPicker("pick at least one ingredient")
+			end
+		end)
+	end
+
+	local function toggle()
+		gui.Enabled = not gui.Enabled
+		if gui.Enabled and not busy then
+			showPicker()
+		end
+	end
+
+	ContextActionService:BindAction("ToggleBake", function(_, inputState)
+		if inputState == Enum.UserInputState.Begin then
+			toggle()
+		end
+		return Enum.ContextActionResult.Pass
+	end, false, Enum.KeyCode.K)
+
+	local function hookStation(part: Instance)
+		if not part:IsA("BasePart") or part:FindFirstChildOfClass("ProximityPrompt") then
+			return
+		end
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = "Bake"
+		prompt.ObjectText = "Kitchen"
+		prompt.Parent = part
+		prompt.Triggered:Connect(function()
+			if not gui.Enabled then
+				toggle()
+			end
+		end)
+	end
+	for _, p in CollectionService:GetTagged("BakeStation") do
+		hookStation(p)
+	end
+	CollectionService:GetInstanceAddedSignal("BakeStation"):Connect(hookStation)
+end
+
+return BakeController
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX18"><Properties><string name="Name">HUD</string><ProtectedString name="Source"><![CDATA[--!strict
+-- Shows cash and level, and keeps the latest server state for other controllers.
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
+
+local HUD = {}
+HUD.state = nil :: any
+local listeners: { (any) -> () } = {}
+
+function HUD:OnState(fn: (any) -> ())
+	table.insert(listeners, fn)
+	if HUD.state then
+		fn(HUD.state)
+	end
+end
+
+function HUD:Init() end
+
+function HUD:Start()
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "HUD"
+	gui.ResetOnSpawn = false
+	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromOffset(220, 56)
+	label.Position = UDim2.new(0, 12, 0, 12)
+	label.BackgroundColor3 = Color3.fromRGB(40, 28, 20)
+	label.BackgroundTransparency = 0.2
+	label.TextColor3 = Color3.fromRGB(255, 232, 190)
+	label.Font = Enum.Font.GothamBold
+	label.TextSize = 18
+	label.Text = "Loading..."
+	label.Parent = gui
+	Instance.new("UICorner").Parent = label
+
+	local function apply(state: any)
+		HUD.state = state
+		label.Text = `$ {math.floor(state.cash)}   Lv {state.level}\n[B] Shop  [K] Bake  [P] Phone`
+		for _, fn in listeners do
+			task.spawn(fn, state)
+		end
+	end
+
+	Remotes.event("StateUpdated").OnClientEvent:Connect(apply)
+	local ok, state = pcall(function()
+		return Remotes.func("GetState"):InvokeServer()
+	end)
+	if ok and state then
+		apply(state)
+	end
+end
+
+return HUD
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX19"><Properties><string name="Name">PhoneController</string><ProtectedString name="Source"><![CDATA[--!strict
+-- Phone: shows customer orders and lets you hand over a batch. Press P to open.
+local ContextActionService = game:GetService("ContextActionService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
+local HUD = require(script.Parent.HUD)
+
+local PhoneController = {}
+
+local CREAM = Color3.fromRGB(255, 232, 190)
+local BROWN = Color3.fromRGB(94, 64, 40)
+
+function PhoneController:Init() end
+
+function PhoneController:Start()
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "Phone"
+	gui.ResetOnSpawn = false
+	gui.Enabled = false
+	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+	local toastGui = Instance.new("ScreenGui")
+	toastGui.Name = "PhoneToasts"
+	toastGui.ResetOnSpawn = false
+	toastGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+	local toast = Instance.new("TextLabel")
+	toast.Size = UDim2.fromOffset(340, 56)
+	toast.Position = UDim2.new(1, -352, 0, 12)
+	toast.BackgroundColor3 = Color3.fromRGB(40, 28, 20)
+	toast.TextColor3 = CREAM
+	toast.Font = Enum.Font.GothamBold
+	toast.TextSize = 15
+	toast.TextWrapped = true
+	toast.Visible = false
+	toast.Parent = toastGui
+	local toastId = 0
+	local function say(text: string)
+		toastId += 1
+		local mine = toastId
+		toast.Text = text
+		toast.Visible = true
+		task.delay(4, function()
+			if toastId == mine then
+				toast.Visible = false
+			end
+		end)
+	end
+
+	local frame = Instance.new("ScrollingFrame")
+	frame.Size = UDim2.fromOffset(380, 460)
+	frame.Position = UDim2.new(0.5, -190, 0.5, -230)
+	frame.BackgroundColor3 = Color3.fromRGB(40, 28, 20)
+	frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	frame.CanvasSize = UDim2.new()
+	frame.Parent = gui
+	Instance.new("UICorner").Parent = frame
+	local layout = Instance.new("UIListLayout")
+	layout.Padding = UDim.new(0, 4)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Parent = frame
+
+	local orders: { [number]: any } = {}
+	local chooseFor: number? = nil
+
+	local function text(t: string, h: number): TextLabel
+		local l = Instance.new("TextLabel")
+		l.Size = UDim2.new(1, -12, 0, h)
+		l.BackgroundTransparency = 1
+		l.TextColor3 = CREAM
+		l.Font = Enum.Font.Gotham
+		l.TextSize = 15
+		l.TextWrapped = true
+		l.TextXAlignment = Enum.TextXAlignment.Left
+		l.Text = t
+		l.Parent = frame
+		return l
+	end
+
+	local function btn(t: string): TextButton
+		local b = Instance.new("TextButton")
+		b.Size = UDim2.new(1, -12, 0, 32)
+		b.BackgroundColor3 = BROWN
+		b.TextColor3 = Color3.new(1, 1, 1)
+		b.Font = Enum.Font.Gotham
+		b.TextSize = 15
+		b.Text = t
+		b.Parent = frame
+		return b
+	end
+
+	local render
+
+	function render()
+		for _, c in frame:GetChildren() do
+			if not c:IsA("UIListLayout") and not c:IsA("UICorner") then
+				c:Destroy()
+			end
+		end
+		text("Phone", 28).Font = Enum.Font.GothamBold
+
+		if chooseFor then
+			local order = orders[chooseFor]
+			if not order then
+				chooseFor = nil
+				return render()
+			end
+			text(`Deliver to {order.customerName} (needs {order.count} cookies)`, 40)
+			local state = HUD.state
+			local any = false
+			for _, b in (state and state.batches) or {} do
+				any = true
+				local choice = btn(`{b.name}  Q{math.floor(b.quality * 100)}%  Craving {b.craving}  x{b.count}`)
+				choice.Activated:Once(function()
+					local ok, res = Remotes.func("DeliverOrder"):InvokeServer(order.id, b.id)
+					if ok then
+						orders[order.id] = nil
+						chooseFor = nil
+						say(
+							`{res.customerName}: "{res.reaction}"  +${res.pay}  ({res.relationship}){if res.ghosted then " They need a break from cookies." else ""}`
+						)
+					else
+						say(tostring(res))
+					end
+					render()
+				end)
+			end
+			if not any then
+				text("You have no cookies. Press K to bake some.", 40)
+			end
+			btn("Back").Activated:Once(function()
+				chooseFor = nil
+				render()
+			end)
+			return
+		end
+
+		local shown = 0
+		for _, o in orders do
+			shown += 1
+			text(`{o.customerName} ({o.personality}): "{o.text}"  Offer ${o.offer}`, 64)
+			local row = btn("Deliver")
+			row.Activated:Once(function()
+				chooseFor = o.id
+				render()
+			end)
+			local decline = btn("Decline")
+			decline.Activated:Once(function()
+				Remotes.func("DeclineOrder"):InvokeServer(o.id)
+				orders[o.id] = nil
+				render()
+			end)
+		end
+		if shown == 0 then
+			text("No messages yet. Customers will text you soon.", 40)
+		end
+	end
+
+	Remotes.event("OrderReceived").OnClientEvent:Connect(function(order)
+		orders[order.id] = order
+		say(`New order from {order.customerName}! Press P.`)
+		render()
+	end)
+	Remotes.event("OrderExpired").OnClientEvent:Connect(function(id)
+		orders[id] = nil
+		if chooseFor == id then
+			chooseFor = nil
+		end
+		render()
+	end)
+
+	HUD:OnState(function()
+		if gui.Enabled and chooseFor then
+			render()
+		end
+	end)
+
+	ContextActionService:BindAction("TogglePhone", function(_, inputState)
+		if inputState == Enum.UserInputState.Begin then
+			gui.Enabled = not gui.Enabled
+			if gui.Enabled then
+				render()
+			end
+		end
+		return Enum.ContextActionResult.Pass
+	end, false, Enum.KeyCode.P)
+
+	render()
+end
+
+return PhoneController
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX20"><Properties><string name="Name">ShopController</string><ProtectedString name="Source"><![CDATA[--!strict
+-- Ingredient shop panel. Press B to open. Prices come from the shared config; the server validates every purchase.
+local ContextActionService = game:GetService("ContextActionService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Ingredients = require(ReplicatedStorage.Shared.Config.Ingredients)
+local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
+local HUD = require(script.Parent.HUD)
+
+local ShopController = {}
+
+function ShopController:Init() end
+
+function ShopController:Start()
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "Shop"
+	gui.ResetOnSpawn = false
+	gui.Enabled = false
+	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+	local frame = Instance.new("ScrollingFrame")
+	frame.Size = UDim2.fromOffset(360, 420)
+	frame.Position = UDim2.new(0.5, -180, 0.5, -210)
+	frame.BackgroundColor3 = Color3.fromRGB(40, 28, 20)
+	frame.CanvasSize = UDim2.new()
+	frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	frame.Parent = gui
+	Instance.new("UICorner").Parent = frame
+	local list = Instance.new("UIListLayout")
+	list.Padding = UDim.new(0, 4)
+	list.SortOrder = Enum.SortOrder.LayoutOrder
+	list.Parent = frame
+
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.new(1, 0, 0, 36)
+	title.BackgroundTransparency = 1
+	title.Font = Enum.Font.GothamBold
+	title.TextSize = 20
+	title.TextColor3 = Color3.fromRGB(255, 232, 190)
+	title.Text = "Ingredient Shop"
+	title.LayoutOrder = -1
+	title.Parent = frame
+
+	local ids = {}
+	for id in Ingredients do
+		table.insert(ids, id)
+	end
+	table.sort(ids, function(a, b)
+		return Ingredients[a].cost < Ingredients[b].cost
+	end)
+
+	local buy = Remotes.func("BuyIngredient")
+	local owned: { [string]: TextButton } = {}
+	for i, id in ids do
+		local ing = Ingredients[id]
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(1, -12, 0, 36)
+		btn.LayoutOrder = i
+		btn.BackgroundColor3 = Color3.fromRGB(94, 64, 40)
+		btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		btn.Font = Enum.Font.Gotham
+		btn.TextSize = 16
+		btn.Text = `{ing.name}  ${ing.cost}`
+		btn.Parent = frame
+		owned[id] = btn
+		btn.Activated:Connect(function()
+			local ok, reason = buy:InvokeServer(id, 1)
+			if not ok then
+				btn.Text = `{ing.name}: {reason}`
+				task.delay(1.5, function()
+					btn.Text = `{ing.name}  ${ing.cost}`
+				end)
+			end
+		end)
+	end
+
+	HUD:OnState(function(state)
+		for id, btn in owned do
+			local n = state.ingredients[id] or 0
+			btn.Text = `{Ingredients[id].name}  ${Ingredients[id].cost}   (have {n})`
+		end
+	end)
+
+	ContextActionService:BindAction("ToggleShop", function(_, inputState)
+		if inputState == Enum.UserInputState.Begin then
+			gui.Enabled = not gui.Enabled
+		end
+		return Enum.ContextActionResult.Pass
+	end, false, Enum.KeyCode.B)
+end
+
+return ShopController
+]]></ProtectedString></Properties></Item></Item></Item></Item></Item></roblox>

@@ -2,7 +2,15 @@
 
 A Roblox game about baking cookies by hand, mixing ingredients, and selling to a town of customers with real personalities. See the design doc and build roadmap for the full plan.
 
-## Setup
+## Quick start (no Rojo)
+
+Open `build/CookieDistributor.rbxlx` in Roblox Studio (File > Open from File), then press Play.
+Controls: **B** shop, **K** bake, **P** phone. For saving to work, publish the place and turn on
+Game Settings > Security > Enable Studio Access to API Services.
+
+After changing anything in `src/`, rebuild the file with `python3 tools/build_rbxlx.py`.
+
+## Setup with Rojo (for live syncing)
 
 1. Install [Roblox Studio](https://create.roblox.com) and [Rojo](https://rojo.space/docs/v7/getting-started/installation/) (CLI plus Studio plugin).
 2. In a new Baseplate place, open this folder in a terminal and run `rojo serve`.
