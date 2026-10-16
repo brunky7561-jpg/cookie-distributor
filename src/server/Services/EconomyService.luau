@@ -1,16 +1,8 @@
 --!strict
--- Owns cash, XP and the ingredient shop. All amounts are validated here, never on the client.
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Ingredients = require(ReplicatedStorage.Shared.Config.Ingredients)
-local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
+-- Owns cash, XP and the ledger. Amounts are only ever changed here, never by the client.
 local PlayerDataService = require(script.Parent.PlayerDataService)
-local InventoryService = require(script.Parent.InventoryService)
-local RateLimit = require(ReplicatedStorage.Shared.Modules.RateLimit)
 
-local MAX_BUY = 50
 local XP_PER_LEVEL = 100 -- level n needs n * XP_PER_LEVEL to reach n + 1
-local RARE_UNLOCK_LEVEL = 5
 
 local EconomyService = {}
 
@@ -53,31 +45,7 @@ function EconomyService:AddXp(player: Player, amount: number)
 	PlayerDataService:Replicate(player)
 end
 
-function EconomyService:Init()
-	Remotes.func("BuyIngredient").OnServerInvoke = function(player: Player, id: any, qty: any)
-		if not RateLimit.check(player, "BuyIngredient", 0.1) then
-			return false, "slow down"
-		end
-		if type(id) ~= "string" or type(qty) ~= "number" or qty ~= qty then
-			return false, "bad request"
-		end
-		qty = math.floor(qty)
-		local ing = Ingredients[id]
-		local data = PlayerDataService:Get(player)
-		if not ing or not data or qty < 1 or qty > MAX_BUY then
-			return false, "bad request"
-		end
-		if table.find(ing.tags, "rare") and data.level < RARE_UNLOCK_LEVEL then
-			return false, `rare ingredients unlock at level {RARE_UNLOCK_LEVEL}`
-		end
-		if not EconomyService:TrySpend(player, ing.cost * qty) then
-			return false, "not enough cash"
-		end
-		EconomyService:Record(player, "supplies", ing.cost * qty)
-		InventoryService:Add(player, id, qty)
-		return true
-	end
-end
+function EconomyService:Init() end
 
 function EconomyService:Start() end
 

@@ -49,6 +49,8 @@ local function node(name, parent)
 			local c = rawget(t, "_children")[k]
 			if c then return c end
 			if k == "FindFirstChild" or k == "WaitForChild" then return function(self, nm) return self._children[nm] end end
+			if k == "IsA" then return function(self, c) return self.ClassName == c or c == "BasePart" end end
+			if k == "IsDescendantOf" then return function() return true end end
 			if k == "SetAttribute" then return function(self, a, v) self._attrs[a] = v end end
 			if k == "GetAttribute" then return function(self, a) return self._attrs[a] end end
 			if k == "Destroy" then return function(self) self.Destroyed = true if self.Parent then self.Parent._children[self.Name] = nil end end end
@@ -65,12 +67,23 @@ end
 Instance = { new = function(cls)
 	local o = node(cls); o.ClassName = cls
 	if cls == "RemoteEvent" then o.sent = {}; function o:FireClient(p, ...) table.insert(self.sent, { p, ... }) end end
+	if cls == "ProximityPrompt" then o.Triggered = signal() end
+	if cls == "Part" then o.Position = Vector3.new(0, 0, 0); o.Size = Vector3.new(1, 1, 1) end
 	if cls == "BindableEvent" then
 		local s = signal(); o.Event = s
 		function o:Fire(...) for _, h in s._handlers do h(...) end end
 	end
 	return o
 end }
+
+-- minimal math/UI globals so config and UI-building modules can load on the server side
+local V3mt = {}
+V3mt.__index = V3mt
+V3mt.__add = function(a, b) return setmetatable({ X = a.X + b.X, Y = a.Y + b.Y, Z = a.Z + b.Z }, V3mt) end
+Vector3 = { new = function(x, y, z) return setmetatable({ X = x or 0, Y = y or 0, Z = z or 0 }, V3mt) end }
+Color3 = { fromHex = function() return {} end, fromRGB = function() return {} end, new = function() return {} end }
+UDim2 = { fromOffset = function() return {} end, fromScale = function() return {} end, new = function() return {} end }
+Enum = setmetatable({}, { __index = function() return setmetatable({}, { __index = function(_, j) return j end }) end })
 
 local RS = node("ReplicatedStorage")
 local Shared = node("Shared", RS)
@@ -88,15 +101,17 @@ function store:UpdateAsync(key, fn)
 	if new ~= nil then storeData[key] = deepcopy(new) end
 	return new
 end
-local config = { studio = true }
+local config = { studio = true, distance = 0, tagged = {} }
+workspace = node("Workspace")
 local services = {
 	ReplicatedStorage = RS, Players = Players,
 	DataStoreService = { GetDataStore = function() return store end },
+	CollectionService = { GetTagged = function(_, tag) return config.tagged[tag] or {} end },
 	RunService = { IsServer = function() return true end, IsStudio = function() return config.studio end },
 }
 game = { GetService = function(self, n) return services[n] or error("no service " .. n) end, JobId = "job", BindToClose = function() end }
 
-MODS["Services.InteractionService"] = function() return { IsNearStation = function() return true end, Init = function() end, Start = function() end } end
+MODS["Services.InteractionService"] = function() return { DistanceToPart = function() return config.distance end, IsNearStation = function() return true end, Init = function() end, Start = function() end } end
 
 local ServicesFolder = node("Services")
 local nodes = {}

@@ -50,7 +50,7 @@ local function objectiveFor(state: any, orders: { any }): string
 		end
 	end
 	if state.milestones and state.milestones.firstOrderDone then
-		return "Nice work! Wait for new orders, or open the Shop (B) to stock up."
+		return "Nice work! Wait for new orders, or order ingredients in PantryDash on your phone."
 	end
 	return "Waiting for your first customer to text you..."
 end
@@ -134,6 +134,12 @@ function HUD:Start()
 	goalHint.Font = Enum.Font.Gotham
 	goalHint.TextYAlignment = Enum.TextYAlignment.Top
 
+	-- Compact order tracker: the current order's state stays visible while the phone is closed.
+	local trackCard = card(gui, UDim2.fromOffset(300, 48), UDim2.new(0, 12, 0, 202))
+	local trackText = label(trackCard, "", 14, UDim2.fromOffset(12, 4), UDim2.new(1, -24, 0, 40))
+	trackText.Font = Enum.Font.GothamBold
+	trackCard.Visible = false
+
 	-- Dev-only: wipes your save so the first-time flow can be replayed. The server refuses it outside Studio.
 	if RunService:IsStudio() then
 		local reset = Instance.new("TextButton")
@@ -155,13 +161,24 @@ function HUD:Start()
 	actionButton(gui, "Phone", Theme.Coral, UDim2.new(1, -12, 1, -12), function()
 		UIBus.Toggle:Fire("Phone")
 	end)
-	actionButton(gui, "Shop", Theme.Butter, UDim2.new(1, -144, 1, -12), function()
+	actionButton(gui, "Gear", Theme.Butter, UDim2.new(1, -144, 1, -12), function()
 		UIBus.Toggle:Fire("Shop")
 	end)
 
 	local function refreshObjective()
 		if HUD.state then
 			objective.Text = objectiveFor(HUD.state, HUD.orders)
+			local top: any = nil
+			local rank = { Available = 1, Accepted = 2, ["In Production"] = 3, Ready = 4 }
+			for _, o in HUD.orders do
+				if not top or (rank[o.state] or 0) > (rank[top.state] or 0) then
+					top = o
+				end
+			end
+			trackCard.Visible = top ~= nil
+			if top then
+				trackText.Text = `ORDER: {top.customerName}, {top.count}x {top.recipeName}\n[{top.state}]`
+			end
 			local goal = Milestones.next(HUD.state)
 			if goal then
 				goalText.Text = goal.title

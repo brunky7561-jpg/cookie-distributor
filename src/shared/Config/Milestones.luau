@@ -30,7 +30,7 @@ Milestones.list = {
 	{
 		id = "firstUpgrade",
 		title = "Buy the Convection Oven",
-		hint = "Open the Shop (B) and pick Equipment.",
+		hint = "Tap Gear (or press B) and choose the Convection Oven.",
 		done = function(data)
 			return data.equipment.convection_oven == true
 		end,

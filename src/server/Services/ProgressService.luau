@@ -6,7 +6,9 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local AppsConfig = require(ReplicatedStorage.Shared.Config.Apps)
 local Milestones = require(ReplicatedStorage.Shared.Config.Milestones)
+local RateLimit = require(ReplicatedStorage.Shared.Modules.RateLimit)
 local Recipes = require(ReplicatedStorage.Shared.Config.Recipes)
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
 local PlayerDataService = require(script.Parent.PlayerDataService)
@@ -68,7 +70,24 @@ function ProgressService:Check(player: Player)
 	end
 end
 
-function ProgressService:Init() end
+function ProgressService:Init()
+	-- The phone tells us an app was opened so its "NEW" badge goes away for good.
+	Remotes.func("SeenApp").OnServerInvoke = function(player: Player, appId: any)
+		if not RateLimit.check(player, "SeenApp", 0.2) then
+			return false
+		end
+		local data = PlayerDataService:Get(player)
+		local def = if type(appId) == "string" then AppsConfig.byId[appId] else nil
+		if not data or not def or not def.unlock(data) then
+			return false
+		end
+		if not data.settings.seenApps[def.id] then
+			data.settings.seenApps[def.id] = true
+			PlayerDataService:Replicate(player)
+		end
+		return true
+	end
+end
 
 function ProgressService:Start()
 	PlayerDataService.Changed:Connect(function(player: Player)

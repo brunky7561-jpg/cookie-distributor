@@ -1,11 +1,10 @@
 --!strict
--- Ingredient shop panel. Press B to open. Prices come from the shared config; the server validates every purchase.
+-- Gear panel: buy equipment upgrades. Press B or tap Gear. The server validates every purchase.
 local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Equipment = require(ReplicatedStorage.Shared.Config.Equipment)
-local Ingredients = require(ReplicatedStorage.Shared.Config.Ingredients)
 local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
 local HUD = require(script.Parent.HUDController)
 local UIBus = require(script.Parent.UIBus)
@@ -40,42 +39,9 @@ function ShopController:Start()
 	title.Font = Enum.Font.GothamBold
 	title.TextSize = 20
 	title.TextColor3 = Color3.fromRGB(255, 232, 190)
-	title.Text = "Shop"
+	title.Text = "Gear"
 	title.LayoutOrder = -1
 	title.Parent = frame
-
-	local ids = {}
-	for id in Ingredients do
-		table.insert(ids, id)
-	end
-	table.sort(ids, function(a, b)
-		return Ingredients[a].cost < Ingredients[b].cost
-	end)
-
-	local buy = Remotes.func("BuyIngredient")
-	local owned: { [string]: TextButton } = {}
-	for i, id in ids do
-		local ing = Ingredients[id]
-		local btn = Instance.new("TextButton")
-		btn.Size = UDim2.new(1, -12, 0, 36)
-		btn.LayoutOrder = i
-		btn.BackgroundColor3 = Color3.fromRGB(94, 64, 40)
-		btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-		btn.Font = Enum.Font.Gotham
-		btn.TextSize = 16
-		btn.Text = `{ing.name}  ${ing.cost}`
-		btn.Parent = frame
-		owned[id] = btn
-		btn.Activated:Connect(function()
-			local ok, reason = buy:InvokeServer(id, 1)
-			if not ok then
-				btn.Text = `{ing.name}: {reason}`
-				task.delay(1.5, function()
-					btn.Text = `{ing.name}  ${ing.cost}`
-				end)
-			end
-		end)
-	end
 
 	-- Equipment section: one button per purchasable item
 	local header = Instance.new("TextLabel")
@@ -135,10 +101,6 @@ function ShopController:Start()
 			else
 				btn.Text = `{def.name}  ${def.price}\n{def.description}`
 			end
-		end
-		for id, btn in owned do
-			local n = state.ingredients[id] or 0
-			btn.Text = `{Ingredients[id].name}  ${Ingredients[id].cost}   (have {n})`
 		end
 	end)
 

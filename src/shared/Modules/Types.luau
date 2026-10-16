@@ -49,6 +49,7 @@ export type PropertyDef = {
 	ovenSlots: number,
 	storage: number,
 	dailyCost: number,
+	receivingName: string?, -- name of the tagged ReceivingArea part where deliveries are left
 }
 
 return {}

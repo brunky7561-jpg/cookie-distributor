@@ -4,6 +4,7 @@
 local Config = script.Parent.Parent.Config
 local Equipment = require(Config.Equipment)
 local Ingredients = require(Config.Ingredients)
+local Properties = require(Config.Properties)
 
 local DataSchema = {}
 
@@ -28,7 +29,10 @@ function DataSchema.default(): any
 		nextBatchId = 1,
 		milestones = {},
 		stats = { gross = 0, supplies = 0, wages = 0, delivery = 0, other = 0, orders = 0 },
-		settings = { guidance = true, effects = true },
+		deliveries = {}, -- paid PantryDash orders not yet collected: { id, items, propertyId, arriveAt }
+		nextDeliveryId = 1,
+		history = {}, -- last completed orders for the phone
+		settings = { guidance = true, effects = true, seenApps = {} },
 	}
 end
 
@@ -124,6 +128,49 @@ local function sanitizeCustomers(v: any): { [string]: any }
 	return out
 end
 
+local function sanitizeDeliveries(v: any): { any }
+	local out = {}
+	if type(v) == "table" then
+		for _, d in v do
+			if type(d) == "table" and type(d.propertyId) == "string" and Properties[d.propertyId] and type(d.items) == "table" and #out < 10 then
+				local items: { [string]: number } = {}
+				local any = false
+				for id, n in d.items do
+					if type(id) == "string" and Ingredients[id] and isNumber(n) then
+						local count = int(n, 0, 0, 100)
+						if count > 0 then
+							items[id] = count
+							any = true
+						end
+					end
+				end
+				if any then
+					table.insert(out, { id = int(d.id, 0, 0, 2 ^ 31), items = items, propertyId = d.propertyId, arriveAt = int(d.arriveAt, 0, 0, 2 ^ 40) })
+				end
+			end
+		end
+	end
+	return out
+end
+
+local function sanitizeHistory(v: any): { any }
+	local out = {}
+	if type(v) == "table" then
+		for _, h in v do
+			if type(h) == "table" and #out < 10 then
+				table.insert(out, {
+					customer = if type(h.customer) == "string" then string.sub(h.customer, 1, 30) else "Customer",
+					recipe = if type(h.recipe) == "string" then string.sub(h.recipe, 1, 40) else "Cookies",
+					pay = int(h.pay, 0, 0, 1e9),
+					grade = if type(h.grade) == "string" then string.sub(h.grade, 1, 20) else "",
+					t = int(h.t, 0, 0, 2 ^ 40),
+				})
+			end
+		end
+	end
+	return out
+end
+
 -- Brings data from any older version up to VERSION. Unknown future versions are not handled here.
 function DataSchema.migrate(raw: any): any
 	if type(raw) ~= "table" then
@@ -134,7 +181,7 @@ function DataSchema.migrate(raw: any): any
 		-- v1 (milestones 0 and 1): no equipment, stats, settings or reputation; recipe names instead of ids
 		raw.equipment = raw.equipment or { basic_oven = true, mixing_bowl = true, cooling_rack = true }
 		raw.stats = raw.stats or { gross = 0, supplies = 0, wages = 0, delivery = 0, other = 0, orders = 0 }
-		raw.settings = raw.settings or { guidance = true, effects = true }
+		raw.settings = raw.settings or { guidance = true, effects = true, seenApps = {} }
 		raw.reputation = raw.reputation or 0
 		raw.recipes = { classic_chip = true }
 	end
@@ -200,6 +247,13 @@ function DataSchema.sanitize(raw: any): any
 	local settings = if type(raw.settings) == "table" then raw.settings else {}
 	d.settings.guidance = settings.guidance ~= false
 	d.settings.effects = settings.effects ~= false
+	d.settings.seenApps = boolMap(settings.seenApps)
+	d.deliveries = sanitizeDeliveries(raw.deliveries)
+	d.nextDeliveryId = int(raw.nextDeliveryId, 1, 1, 2 ^ 31)
+	for _, dl in d.deliveries do
+		d.nextDeliveryId = math.max(d.nextDeliveryId, dl.id + 1)
+	end
+	d.history = sanitizeHistory(raw.history)
 	return d
 end
 

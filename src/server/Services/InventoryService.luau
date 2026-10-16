@@ -4,6 +4,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Ingredients = require(ReplicatedStorage.Shared.Config.Ingredients)
+local DeliveryMath = require(ReplicatedStorage.Shared.Modules.DeliveryMath)
 local PlayerDataService = require(script.Parent.PlayerDataService)
 
 local MAX_BATCHES_STORED = 30
@@ -50,6 +51,16 @@ function InventoryService:Add(player: Player, id: string, qty: number)
 		data.ingredients[id] = (data.ingredients[id] or 0) + qty
 		PlayerDataService:Replicate(player)
 	end
+end
+
+function InventoryService:Units(player: Player): number
+	local data = PlayerDataService:Get(player)
+	return if data then DeliveryMath.units(data) else 0
+end
+
+function InventoryService:Capacity(player: Player): number
+	local data = PlayerDataService:Get(player)
+	return if data then DeliveryMath.capacity(data) else 0
 end
 
 function InventoryService:HasRoomForBatch(player: Player): boolean

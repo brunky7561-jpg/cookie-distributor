@@ -35,6 +35,11 @@ local function distanceToPart(player: Player, part: BasePart): number?
 	return (localPos - clamped).Magnitude
 end
 
+-- Public: studs from the player's character to the nearest edge of a part (nil if the player has no character).
+function InteractionService:DistanceToPart(player: Player, part: BasePart): number?
+	return distanceToPart(player, part)
+end
+
 -- True if the player is close enough to any station with this tag. Other services use this to guard actions.
 function InteractionService:IsNearStation(player: Player, tag: string): boolean
 	for _, inst in CollectionService:GetTagged(tag) do

@@ -8,7 +8,7 @@ Layout (north is -Z, east is +X), roads on x/z = -250, 0, 250:
     Crumb University        | Farmers Market + Orchard       |
     Autumn Hills (W)        | Farmstead (S)                  |
 
-Tags used by src/server/Services/WorldService.luau: BakeStation, MeetupSpot, PropertyPlot, Landmark.
+Tags used by src/server/Services: BakeStation, MeetupSpot, PropertyPlot, Landmark, ReceivingArea.
 """
 import base64
 import itertools
@@ -361,6 +361,7 @@ def build_apartment():
     k.block("Supply Kiosk", 0, 4.5, 0, 8, 9, 6, C(250, 238, 200), "SmoothPlastic", tags=("Landmark",))
     k.block("Awning", 0, 8.4, 3.8, 9, 0.5, 3.5, C(238, 120, 109), "Fabric", rot=Rx_tilt(0.2))
     k.block("Counter", 0, 3, 3.2, 7, 1, 1.2, WOOD, "Wood")
+    label_marker(out, "Delivery Mat (Starter Apartment)", -41, -57, 7, 7, "ReceivingArea", C(255, 196, 90))
     ring(out, "Your Kitchen (press E to bake)", -30 - 9, -75 - 4, tag="Landmark", color=C(255, 220, 120), d=7, y=1.1)
     return folder("StarterApartment", out)
 

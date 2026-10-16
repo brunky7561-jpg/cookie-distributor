@@ -8,6 +8,7 @@ local STYLES: { [string]: { color: Color3, offset: number, size: number } } = {
 	BakeStation = { color = Color3.fromRGB(255, 200, 90), offset = 5, size = 15 },
 	MeetupSpot = { color = Color3.fromRGB(120, 220, 255), offset = 6, size = 16 },
 	PropertyPlot = { color = Color3.fromRGB(130, 235, 150), offset = 6, size = 16 },
+	ReceivingArea = { color = Color3.fromRGB(255, 200, 90), offset = 5, size = 14 },
 	Landmark = { color = Color3.fromRGB(255, 236, 200), offset = 8, size = 18 },
 }
 
