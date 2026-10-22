@@ -64,9 +64,9 @@ Apps.list = {
 		title = "GearUp",
 		blurb = "Buy better ovens, mixers and racks.",
 		color = "Butter",
-		unlockHint = "Deliver your first order to unlock GearUp.",
-		unlock = function(data)
-			return data.milestones.firstOrderDone == true
+		unlockHint = "GearUp is always available.",
+		unlock = function()
+			return true
 		end,
 	},
 	{

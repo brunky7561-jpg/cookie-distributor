@@ -316,6 +316,9 @@ function PhoneController:Start()
 	end)
 
 	local function toggle()
+		if UIBus.introActive and not gui.Enabled then
+			return -- the title screen is still up
+		end
 		gui.Enabled = not gui.Enabled
 		if gui.Enabled then
 			render()

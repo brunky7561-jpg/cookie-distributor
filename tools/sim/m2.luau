@@ -74,6 +74,7 @@ do -- Milestone 2: save/load, progression, equipment
 
 	-- simulated DataStore failure: load retries, save retries, errors counted
 	local before = P.errors.save
+	config.studio = false -- outside Studio the load retries a few times
 	store.fail = 2
 	local p7 = newPlayer(35, "Flaky"); join(p7)
 	expect(state(p7) ~= nil and P:IsPersistent(p7), "load succeeded after 2 simulated failures")
@@ -85,6 +86,7 @@ do -- Milestone 2: save/load, progression, equipment
 	local p8 = newPlayer(36, "Down"); store.fail = 100; join(p8)
 	expect(state(p8) ~= nil and not P:IsPersistent(p8), "store down: temporary profile, nothing saved")
 	store.fail = 0
+	config.studio = true
 	leave(p8)
 	expect(storeData["Player_36"] == nil or storeData["Player_36"].data == nil, "temporary profile never overwrote the real save")
 

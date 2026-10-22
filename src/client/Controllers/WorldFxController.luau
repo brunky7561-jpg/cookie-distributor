@@ -9,6 +9,7 @@ local Properties = require(ReplicatedStorage.Shared.Config.Properties)
 local Theme = require(ReplicatedStorage.Shared.Config.Theme)
 local UI = require(script.Parent.Parent.Modules.UI)
 local HUD = require(script.Parent.HUDController)
+local UIBus = require(script.Parent.UIBus)
 
 local WorldFxController = {}
 
@@ -161,6 +162,10 @@ local function welcome()
 	limit.MaxSize = Vector2.new(460, 9999)
 	limit.Parent = frame
 
+	local x = UI.button(frame, "X  Close", Theme.Coral, function()
+		gui:Destroy()
+	end)
+	x.LayoutOrder = -1
 	UI.label(frame, "🍪 Cookie Empire", { bold = true, size = 28, align = Enum.TextXAlignment.Center })
 	UI.label(frame, "Bake, deliver, grow.", { size = 16, align = Enum.TextXAlignment.Center })
 	UI.label(frame, "📱 Your phone (P) holds everything: orders, ingredients, recipes and more apps that unlock as you grow.", { size = 15 })
@@ -180,7 +185,14 @@ function WorldFxController:Start()
 	folder = f
 	HUD:OnState(refresh)
 	refresh()
-	task.delay(1.5, welcome)
+	-- the welcome card waits for the title screen / cutscene to finish
+	if UIBus.introActive then
+		UIBus.IntroDone.Event:Connect(function()
+			task.delay(0.5, welcome)
+		end)
+	else
+		task.delay(1.5, welcome)
+	end
 end
 
 return WorldFxController

@@ -42,9 +42,9 @@ local function objectiveFor(state: any, orders: { any }): string
 		if best.state == "Available" then
 			return `Open your phone (P or the Phone button) and accept {best.customerName}'s order.`
 		elseif best.state == "Accepted" then
-			return `Walk to your kitchen counter or oven and press E to bake {best.recipeName}.`
+			return `Tap the 🍪 Bake button (bottom right) to bake {best.recipeName}. Or walk to the kitchen counter and press E.`
 		elseif best.state == "In Production" then
-			return "Finish your bake at the kitchen station (press E to continue)."
+			return "Finish your bake: tap the 🍪 Bake button (or press E at the counter) to continue."
 		elseif best.state == "Ready" then
 			return `Open your phone and deliver the cookies to {best.customerName}.`
 		end
@@ -66,6 +66,7 @@ local function card(parent: Instance, size: UDim2, position: UDim2): Frame
 	corner.CornerRadius = UDim.new(0, 16)
 	corner.Parent = f
 	local stroke = Instance.new("UIStroke")
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Color = Theme.Cocoa
 	stroke.Thickness = 2
 	stroke.Transparency = 0.1
@@ -99,8 +100,8 @@ local function actionButton(parent: Instance, text: string, color: Color3, pos: 
 	b.AnchorPoint = Vector2.new(1, 1)
 	b.BackgroundColor3 = color
 	b.TextColor3 = Theme.Cocoa
-	b.Font = Enum.Font.GothamBold
-	b.TextSize = 20
+	b.Font = Enum.Font.FredokaOne
+	b.TextSize = 22
 	b.Text = text
 	b.AutoButtonColor = true
 	b.Parent = parent
@@ -110,6 +111,7 @@ local function actionButton(parent: Instance, text: string, color: Color3, pos: 
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Theme.Cocoa
 	stroke.Thickness = 2.5
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border -- without this the outline is drawn around the letters
 	stroke.Parent = b
 	local grad = Instance.new("UIGradient")
 	grad.Rotation = 90
@@ -127,6 +129,14 @@ function HUD:Start()
 	gui.ResetOnSpawn = false
 	gui.IgnoreGuiInset = false
 	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+	-- stay hidden behind the title screen; show once it is closed (or after 90 s, so a broken intro can never hide the HUD)
+	gui.Enabled = not UIBus.introActive
+	UIBus.IntroDone.Event:Connect(function()
+		gui.Enabled = true
+	end)
+	task.delay(90, function()
+		gui.Enabled = true
+	end)
 
 	local top = card(gui, UDim2.fromOffset(300, 96), UDim2.new(0, 12, 0, 12))
 	local stats = label(top, "Loading...", 22, UDim2.fromOffset(12, 6), UDim2.new(1, -24, 0, 28))
@@ -182,6 +192,13 @@ function HUD:Start()
 	actionButton(gui, "🔧 Gear", Theme.Butter, UDim2.new(1, -144, 1, -12), function()
 		UIBus.Open:Fire("PhoneGear")
 	end)
+	actionButton(gui, "🍪 Bake", Theme.Mint, UDim2.new(1, -276, 1, -12), function()
+		-- the server walks you to the kitchen counter if you are far away, then the kitchen opens
+		local ok = Remotes.func("GoToKitchen"):InvokeServer()
+		if ok then
+			UIBus.Open:Fire("Bake")
+		end
+	end)
 
 	local function refreshObjective()
 		if HUD.state then
@@ -228,20 +245,35 @@ function HUD:Start()
 
 	Remotes.event("OrdersUpdated").OnClientEvent:Connect(applyOrders)
 	Remotes.event("StateUpdated").OnClientEvent:Connect(apply)
-	task.spawn(function()
+	-- the first call can come back empty if the save is still loading, so keep asking until it arrives
+	local function fetchOrders()
 		local okOrders, list = pcall(function()
 			return Remotes.func("GetOrders"):InvokeServer()
 		end)
 		if okOrders and list then
 			applyOrders(list)
 		end
-	end)
-	local ok, state = pcall(function()
-		return Remotes.func("GetState"):InvokeServer()
-	end)
-	if ok and state then
-		apply(state)
 	end
+	task.spawn(function()
+		local lastError = ""
+		for attempt = 1, 40 do
+			local ok, state = pcall(function()
+				return Remotes.func("GetState"):InvokeServer()
+			end)
+			if ok and state then
+				apply(state)
+				fetchOrders()
+				return
+			end
+			-- show what is going on instead of an endless "Loading..."
+			lastError = if ok then "the server has no save for you yet" else tostring(state)
+			stats.Text = `Connecting... ({attempt})`
+			objective.Text = lastError
+			task.wait(1)
+		end
+		stats.Text = "Could not load your save"
+		objective.Text = `{lastError}. Rejoin the game.`
+	end)
 end
 
 return HUD

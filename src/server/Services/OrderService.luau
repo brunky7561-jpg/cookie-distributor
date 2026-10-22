@@ -164,7 +164,7 @@ local function newOrder(player: Player, t: any, count: number, isFirst: boolean)
 		customerId = t.id,
 		recipeId = recipeId,
 		count = count,
-		offer = math.floor((count * t.budget / 6 + 3) * mult + 0.5),
+		offer = math.floor(count * Recipes.SELL_PRICE * (t.budget / 45) * mult + 0.5), -- Mrs. Park (budget 45) pays $15 per Classic cookie
 		state = "Available",
 		deadline = if isFirst then nil else os.time() + ORDER_LIFETIME,
 		destination = DESTINATION,
@@ -384,6 +384,22 @@ function OrderService:MarkReady(player: Player, orderId: number, batchId: number
 	order.batchId = batchId
 	push(player)
 	notify(player, `Your {order.count} cookies are ready. Open the phone to deliver them.`)
+	return true
+end
+
+-- Accepts the oldest order that is still waiting (used by the opening cutscene). Returns true if one was accepted.
+function OrderService:AcceptFirstAvailable(player: Player): boolean
+	local first: Order? = nil
+	for _, o in activeFor(player) do
+		if o.state == "Available" and (not first or o.id < first.id) then
+			first = o
+		end
+	end
+	if not first then
+		return false
+	end
+	first.state = "Accepted"
+	push(player)
 	return true
 end
 

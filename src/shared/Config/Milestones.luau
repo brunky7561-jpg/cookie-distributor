@@ -14,7 +14,7 @@ Milestones.list = {
 	{
 		id = "firstOrderDone",
 		title = "Deliver your first order",
-		hint = "Open the phone (P), accept Mrs. Park's order and bake it at your kitchen counter.",
+		hint = "Open the phone (P), accept Mrs. Park's order, then tap the Bake button to bake it.",
 		done = function(data)
 			return data.milestones.firstOrderDone == true
 		end,

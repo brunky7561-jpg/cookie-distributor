@@ -75,7 +75,26 @@ function UI.clear(inst: Instance)
 	end
 end
 
-export type LabelOpts = { size: number?, bold: boolean?, color: Color3?, align: Enum.TextXAlignment?, order: number? }
+-- A round, glossy badge with an emoji inside: reads as an icon instead of loose text.
+function UI.badge(parent: Instance, emoji: string, diameter: number, color: Color3?): Frame
+	local f = Instance.new("Frame")
+	f.Size = UDim2.fromOffset(diameter, diameter)
+	f.BackgroundColor3 = color or Theme.Butter
+	f.BorderSizePixel = 0
+	f.Parent = parent
+	UI.corner(f, diameter // 2)
+	UI.stroke(f, math.max(2, diameter // 24))
+	UI.gradient(f, Theme.Cream, color or Theme.Butter)
+	local t = Instance.new("TextLabel")
+	t.Size = UDim2.fromScale(1, 1)
+	t.BackgroundTransparency = 1
+	t.Text = emoji
+	t.TextSize = math.min(100, math.floor(diameter * 0.55))
+	t.Parent = f
+	return f
+end
+
+export type LabelOpts = { size: number?, bold: boolean?, color: Color3?, align: Enum.TextXAlignment?, order: number?, font: Enum.Font?, shadow: boolean? }
 
 function UI.label(parent: Instance, text: string, opts: LabelOpts?): TextLabel
 	local o: LabelOpts = opts or {}
@@ -84,8 +103,12 @@ function UI.label(parent: Instance, text: string, opts: LabelOpts?): TextLabel
 	l.AutomaticSize = Enum.AutomaticSize.Y
 	l.BackgroundTransparency = 1
 	l.TextColor3 = o.color or Theme.Cocoa
-	l.Font = if o.bold then Enum.Font.GothamBold else Enum.Font.Gotham
-	l.TextSize = math.floor((o.size or 15) * UI.textScale + 0.5)
+	l.Font = o.font or (if o.bold then Enum.Font.FredokaOne else Enum.Font.Gotham)
+	if o.shadow then
+		l.TextStrokeTransparency = 0.45 -- soft dark outline so big text reads over any background
+		l.TextStrokeColor3 = Theme.Night
+	end
+	l.TextSize = math.min(100, math.floor((o.size or 15) * UI.textScale + 0.5)) -- 100 is the engine maximum
 	l.TextWrapped = true
 	l.TextXAlignment = o.align or Enum.TextXAlignment.Left
 	l.TextYAlignment = Enum.TextYAlignment.Top
@@ -103,8 +126,8 @@ function UI.button(parent: Instance, text: string, color: Color3?, onClick: (() 
 	b.AutomaticSize = Enum.AutomaticSize.Y
 	b.BackgroundColor3 = color or Theme.Coral
 	b.TextColor3 = Theme.Cocoa
-	b.Font = Enum.Font.GothamBold
-	b.TextSize = math.floor(16 * UI.textScale + 0.5)
+	b.Font = Enum.Font.FredokaOne
+	b.TextSize = math.min(100, math.floor(16 * UI.textScale + 0.5))
 	b.TextWrapped = true
 	b.Text = text
 	b.AutoButtonColor = true

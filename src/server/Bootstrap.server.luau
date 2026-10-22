@@ -1,5 +1,9 @@
 --!strict
 -- Loads every ModuleScript in Services and calls :Init() then :Start() on each.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remotes = require(ReplicatedStorage.Shared.Modules.Remotes)
+Remotes.declareAll()
+
 local services = script.Parent:WaitForChild("Services")
 
 local loaded = {}
@@ -16,12 +20,20 @@ end
 
 for _, entry in loaded do
 	if type(entry.svc) == "table" and entry.svc.Init then
-		entry.svc:Init()
+		local ok, err = pcall(entry.svc.Init, entry.svc)
+		if not ok then
+			warn(`[Server] {entry.name}:Init failed: {err}`) -- one broken service must not stop the others
+		end
 	end
 end
 for _, entry in loaded do
 	if type(entry.svc) == "table" and entry.svc.Start then
-		task.spawn(entry.svc.Start, entry.svc)
+		task.spawn(function()
+			local ok, err = pcall(entry.svc.Start, entry.svc)
+			if not ok then
+				warn(`[Server] {entry.name}:Start failed: {err}`)
+			end
+		end)
 	end
 end
 

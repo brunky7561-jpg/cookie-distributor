@@ -14,6 +14,15 @@ for d,tree in (('shared','Shared'),):
 for f in os.listdir(f'{root}/server/Services'):
     add(f'{root}/server/Services/{f}',f'Services.{f[:-5]}')
 out=['local MODS = {}']
+client={}
+for sub in ('Controllers','Apps','Modules'):
+    d=f'{root}/client/{sub}'
+    for f in sorted(os.listdir(d)):
+        client[f'{sub}.{f[:-5]}']=open(os.path.join(d,f)).read()
+out.append('CLIENT_SRC = {}')
+for k,v in client.items():
+    assert ']==]' not in v
+    out.append(f'CLIENT_SRC["{k}"] = [==[\n{v}\n]==]')
 for k,v in mods.items():
     out.append(f'MODS["{k}"] = function(script)\n{v}\nend')
 import sys

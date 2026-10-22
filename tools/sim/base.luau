@@ -77,14 +77,34 @@ Instance = { new = function(cls)
 	return o
 end }
 
--- minimal math/UI globals so config and UI-building modules can load on the server side
+-- minimal math/UI globals so config and UI-building modules can load. U() is a universal stub: indexable, callable, arithmetic-safe.
+local Umt = {}
+local function U() return setmetatable({}, Umt) end
+Umt.__index = function(t, k) local v = U() rawset(t, k, v) return v end
+Umt.__call = function() return U() end
+for _, op in { "__add", "__sub", "__mul", "__div", "__unm", "__concat" } do Umt[op] = function() return U() end end
+Umt.__lt = function() return false end
+Umt.__le = function() return false end
+Umt.__len = function() return 0 end
+Umt.__tostring = function() return "<stub>" end
 local V3mt = {}
-V3mt.__index = V3mt
-V3mt.__add = function(a, b) return setmetatable({ X = a.X + b.X, Y = a.Y + b.Y, Z = a.Z + b.Z }, V3mt) end
-Vector3 = { new = function(x, y, z) return setmetatable({ X = x or 0, Y = y or 0, Z = z or 0 }, V3mt) end }
-Color3 = { fromHex = function() return {} end, fromRGB = function() return {} end, new = function() return {} end }
-UDim2 = { fromOffset = function() return {} end, fromScale = function() return {} end, new = function() return {} end }
+V3mt.__index = function(t, k) if k == "Magnitude" then return math.sqrt(t.X ^ 2 + t.Y ^ 2 + t.Z ^ 2) end return nil end
+local function V3(x, y, z) return setmetatable({ X = x or 0, Y = y or 0, Z = z or 0 }, V3mt) end
+V3mt.__add = function(a, b) return V3(a.X + b.X, a.Y + b.Y, a.Z + b.Z) end
+V3mt.__sub = function(a, b) return V3(a.X - b.X, a.Y - b.Y, a.Z - b.Z) end
+V3mt.__div = function(a, n) return V3(a.X / n, a.Y / n, a.Z / n) end
+V3mt.__mul = function(a, n) return V3(a.X * n, a.Y * n, a.Z * n) end
+Vector3 = { new = V3 }
+CFrame = { lookAt = function(p) local c = { Position = p } return c end, new = function(p) local c = { Position = p }; function c:PointToObjectSpace(q) return q - p end return c end }
+Color3 = { fromHex = U, fromRGB = U, new = U }
+UDim2 = { fromOffset = U, fromScale = U, new = U }
+UDim = { new = U }
+TweenInfo = { new = U }
+Vector2 = { new = U }
+ColorSequence = { new = U }
+NumberSequence = { new = U }
 Enum = setmetatable({}, { __index = function() return setmetatable({}, { __index = function(_, j) return j end }) end })
+SIM_U = U
 
 local RS = node("ReplicatedStorage")
 local Shared = node("Shared", RS)
@@ -97,7 +117,7 @@ local function deepcopy(v) if type(v) ~= "table" then return v end local o = {} 
 local store = { fail = 0, calls = 0 }
 function store:UpdateAsync(key, fn)
 	self.calls += 1
-	if self.fail > 0 then self.fail -= 1 error("DataStore request was added to queue (simulated failure)") end
+	if self.fail > 0 then self.fail -= 1 error(self.msg or "DataStore request was added to queue (simulated failure)") end
 	local new = fn(deepcopy(storeData[key]))
 	if new ~= nil then storeData[key] = deepcopy(new) end
 	return new
@@ -107,13 +127,14 @@ workspace = node("Workspace")
 local services = {
 	ReplicatedStorage = RS, Players = Players,
 	DataStoreService = { GetDataStore = function() return store end },
-	CollectionService = { GetTagged = function(_, tag) return config.tagged[tag] or {} end },
+	CollectionService = { GetTagged = function(_, tag) return config.tagged[tag] or {} end, HasTag = function(_, inst, tag) return table.find(config.tagged[tag] or {}, inst) ~= nil end, GetInstanceAddedSignal = function() return { Connect = function() end } end },
 	TextService = { FilterStringAsync = function(_, text) if config.filterFail then error('filter down') end local out = text if string.find(string.lower(text), 'badword') then out = string.rep('#', #text) end return { GetNonChatStringForBroadcastAsync = function() return out end } end },
 	RunService = { Heartbeat = { Connect = function() end }, IsServer = function() return true end, IsStudio = function() return config.studio end },
 }
 game = { GetService = function(self, n) return services[n] or error("no service " .. n) end, JobId = "job", BindToClose = function() end }
 
-MODS["Services.InteractionService"] = function() return { DistanceToPart = function() return config.distance end, IsNearStation = function() return true end, Init = function() end, Start = function() end } end
+REAL_INTERACTION = MODS["Services.InteractionService"]
+MODS["Services.InteractionService"] = function() return { DistanceToPart = function() return config.distance end, IsNearStation = function() return true end, BringToStation = function() return true end, Init = function() end, Start = function() end } end
 
 local ServicesFolder = node("Services")
 local nodes = {}

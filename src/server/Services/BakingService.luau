@@ -38,6 +38,7 @@ type Session = {
 	stage: Stage,
 	running: boolean, -- true while a timing bar is live (portion, bake)
 	t0: number,
+	mix: number, -- 0..1 from the dough minigame (1 when the client sent nothing, so a miss never blocks progress)
 	portion: number,
 	bake: number,
 	bakeSigned: number,
@@ -83,7 +84,7 @@ local function finish(player: Player, s: Session): (boolean, any)
 	sessions[player] = nil
 
 	-- Ingredients do not spoil yet, so freshness is full marks until a later milestone gives it meaning.
-	local factors: Quality.Factors = { recipe = s.correctness, bake = s.bake, fresh = 1, portion = s.portion }
+	local factors: Quality.Factors = { recipe = s.correctness, bake = s.bake, fresh = 1, portion = s.portion, dough = s.mix }
 	local score = Quality.score(factors)
 	local quality = score / 100
 	local appeal = AppealCalc.compute(s.ingredients, quality)
@@ -266,6 +267,7 @@ function BakingService:Init()
 			stage = "mix",
 			running = false,
 			t0 = os.clock(),
+			mix = 1,
 			portion = 0,
 			bake = 0,
 			bakeSigned = 0,
@@ -288,6 +290,9 @@ function BakingService:Init()
 		if action == "mixDone" and s.stage == "mix" then
 			if now - s.t0 < s.mixMin then
 				return false, "keep stirring a little longer"
+			end
+			if type(arg) == "number" and arg == arg then
+				s.mix = math.clamp(arg, 0, 1)
 			end
 			s.stage = "portion"
 			s.running = false

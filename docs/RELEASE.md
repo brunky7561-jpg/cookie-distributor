@@ -4,7 +4,7 @@
 
 ## Launch checklist
 - [ ] Open `CookieDistributor.rbxlx` in Studio; Output shows no red errors.
-- [ ] `[Server] started 18 services` and `[Client] started 7 controllers`.
+- [ ] `[Server] started 19 services` and `[Client] started 8 controllers`.
 - [ ] Studio Settings > Security: enable **Studio Access to API Services** (DataStores).
 - [ ] Walk the QA checklist below on a phone-sized emulator and a desktop.
 - [ ] Publish to a **private test place** first; test with 2 accounts for 30 minutes (join, leave, rejoin).

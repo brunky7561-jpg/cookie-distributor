@@ -47,7 +47,7 @@ do -- Milestone 1: one complete cookie order
 	local cashBefore = data.cash
 	ok, msg = call(p, "OrderAction", "deliver", oid); clock += 1
 	expect(ok and msg.pay > 0, "deliver paid " .. tostring(msg.pay) .. " tip " .. tostring(msg.tip))
-	expect(msg.pay + msg.tip >= 45 and msg.pay + msg.tip <= 80, "first payout in the roadmap's $45-70 range (plus tip)")
+	expect(msg.pay + msg.tip >= 90 and msg.pay + msg.tip <= 150, "first payout: 6 Classic cookies at $15 each (about $90-150 with quality and tip)")
 	expect(data.cash == cashBefore + msg.pay + msg.tip, "cash increased exactly once")
 	local paid = data.cash
 	expect(not call(p, "OrderAction", "deliver", oid), "second deliver refused")
