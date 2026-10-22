@@ -115,12 +115,31 @@ function BakingController:Start()
 		zone.BackgroundColor3 = Theme.Mint
 		zone.BorderSizePixel = 0
 		zone.Parent = bar
+		for _, edge in { 0, 1 } do -- the two lines the marker must stop between
+			local line = Instance.new("Frame")
+			line.Size = UDim2.new(0, 3, 1, 8)
+			line.AnchorPoint = Vector2.new(0.5, 0.5)
+			line.Position = UDim2.new(edge, 0, 0.5, 0)
+			line.BackgroundColor3 = Theme.Cocoa
+			line.BorderSizePixel = 0
+			line.Parent = zone
+		end
 		local fill = Instance.new("Frame")
 		fill.Size = UDim2.fromScale(0, 1)
 		fill.BackgroundColor3 = Theme.Butter
 		fill.BackgroundTransparency = 0.35
 		fill.BorderSizePixel = 0
 		fill.Parent = bar
+
+		local marker = Instance.new("Frame") -- the moving line; stop it between the two dark lines
+		marker.Size = UDim2.new(0, 6, 1, 14)
+		marker.AnchorPoint = Vector2.new(0.5, 0.5)
+		marker.Position = UDim2.new(0, 0, 0.5, 0)
+		marker.BackgroundColor3 = Theme.Coral
+		marker.BorderSizePixel = 0
+		marker.ZIndex = 5
+		marker.Parent = bar
+		UI.corner(marker, 3)
 
 		local t0 = os.clock() - startedAgo
 		local conn: RBXScriptConnection
@@ -129,7 +148,9 @@ function BakingController:Start()
 				conn:Disconnect()
 				return
 			end
-			fill.Size = UDim2.fromScale(math.clamp((os.clock() - t0) / (ideal * Baking.BAR_FACTOR), 0, 1), 1)
+			local progress = math.clamp((os.clock() - t0) / (ideal * Baking.BAR_FACTOR), 0, 1)
+			fill.Size = UDim2.fromScale(progress, 1)
+			marker.Position = UDim2.new(progress, 0, 0.5, 0)
 		end)
 		UI.button(content, buttonText, Theme.Coral, function()
 			if generation == mine then
@@ -157,6 +178,7 @@ function BakingController:Start()
 		local card = UI.card(content)
 		UI.label(card, "How your score was made", { bold = true, size = 14 })
 		UI.label(card, `Recipe {percent(f.recipe)}  (counts {percent(w.recipe)})`, { size = 13 })
+		UI.label(card, `Dough mixing {percent(f.dough or 1)}  (counts {percent(w.dough)})`, { size = 13 })
 		UI.label(card, `Bake timing {percent(f.bake)}  (counts {percent(w.bake)})`, { size = 13 })
 		UI.label(card, `Ingredient freshness {percent(f.fresh)}  (counts {percent(w.fresh)})`, { size = 13 })
 		UI.label(card, `Portion consistency {percent(f.portion)}  (counts {percent(w.portion)})`, { size = 13 })
@@ -187,35 +209,78 @@ function BakingController:Start()
 
 		if stage == "mix" then
 			title(`Step 1 of 5: Mix{forOrder}`)
-			local taps = info.mixTaps or 8
-			UI.label(content, `Tap Stir {taps} times to mix the dough.`)
+			-- Dough minigame: a marker sweeps back and forth; press Stir while it is inside the green zone.
+			local rounds = math.clamp((info.mixTaps or 8) - 3, 3, 5)
+			UI.label(content, `Stir the dough {rounds} times. Press Stir when the marker is in the green zone. A miss only lowers your dough score.`)
 			local bar = Instance.new("Frame")
-			bar.Size = UDim2.new(1, 0, 0, 24)
+			bar.Size = UDim2.new(1, 0, 0, 36)
 			bar.BackgroundColor3 = Color3.fromRGB(230, 214, 184)
 			bar.BorderSizePixel = 0
 			bar.Parent = content
 			UI.corner(bar)
-			local fill = Instance.new("Frame")
-			fill.Size = UDim2.fromScale(0, 1)
-			fill.BackgroundColor3 = Theme.Mint
-			fill.BorderSizePixel = 0
-			fill.Parent = bar
+			local ZONE = 0.2
+			local zone = Instance.new("Frame")
+			zone.Size = UDim2.fromScale(ZONE, 1)
+			zone.BackgroundColor3 = Theme.Mint
+			zone.BorderSizePixel = 0
+			zone.Parent = bar
+			local marker = Instance.new("Frame")
+			marker.Size = UDim2.new(0, 8, 1, 14)
+			marker.AnchorPoint = Vector2.new(0.5, 0.5)
+			marker.Position = UDim2.new(0, 0, 0.5, 0)
+			marker.BackgroundColor3 = Theme.Coral
+			marker.BorderSizePixel = 0
+			marker.ZIndex = 5
+			marker.Parent = bar
+			UI.corner(marker, 4)
+			local status = UI.label(content, "", { bold = true, size = 16 })
 			local message = UI.label(content, "")
-			local count = 0
 			local mine = generation
+			local round = 1
+			local points = 0
+			local zoneLeft = 0.4
+			local started = os.clock()
+			local finished = false
+			local function newRound()
+				zoneLeft = 0.1 + math.random() * (0.8 - ZONE)
+				zone.Position = UDim2.fromScale(zoneLeft, 0)
+				started = os.clock()
+				status.Text = `Round {round} of {rounds}   |   Dough {math.floor(points / math.max(1, round - 1) * 100 + 0.5)}%`
+			end
+			newRound()
+			status.Text = `Round 1 of {rounds}`
+			local conn: RBXScriptConnection
+			conn = RunService.RenderStepped:Connect(function()
+				if generation ~= mine or finished then
+					conn:Disconnect()
+					return
+				end
+				-- triangle wave 0..1..0, a little faster every round
+				local speed = 0.7 + 0.15 * (round - 1)
+				local phase = ((os.clock() - started) * speed) % 2
+				marker.Position = UDim2.new(if phase < 1 then phase else 2 - phase, 0, 0.5, 0)
+			end)
 			UI.button(content, "Stir!", Theme.Coral, function()
-				if generation ~= mine or count >= taps then
+				if generation ~= mine or finished then
 					return
 				end
-				count += 1
-				fill.Size = UDim2.fromScale(count / taps, 1)
-				if count < taps then
+				local phase = ((os.clock() - started) * (0.7 + 0.15 * (round - 1))) % 2
+				local x = if phase < 1 then phase else 2 - phase
+				local gap = math.max(zoneLeft - x, x - (zoneLeft + ZONE), 0)
+				local hit = if gap == 0 then 1 elseif gap < ZONE * 0.6 then 0.5 else 0
+				points += hit
+				message.Text = if hit == 1 then "Perfect stir!" elseif hit == 0.5 then "Close!" else "Missed, keep going."
+				if round < rounds then
+					round += 1
+					newRound()
 					return
 				end
-				message.Text = "Almost there..."
+				finished = true
+				local score = points / rounds
+				status.Text = `Dough {math.floor(score * 100 + 0.5)}%`
 				task.spawn(function()
 					for _ = 1, 20 do
-						local ok, res = step("mixDone")
+						local ok, res = step("mixDone", score)
 						if generation ~= mine then
 							return
 						end
@@ -378,7 +443,7 @@ function BakingController:Start()
 			end
 			local appeal = AppealCalc.compute(Recipes.expand(r.requires), 0.9).score
 			local chosen = selectedRecipe == id
-			UI.button(content, `{if chosen then "> " else ""}{r.name}  (about ${cost}, Appeal ~{appeal})`, if chosen then Theme.Mint else Theme.Buttercream, function()
+			UI.button(content, `{if chosen then "> " else ""}{r.name}  (batch of 6: ${cost} to make, sells ~${math.floor(Recipes.SELL_PRICE * (r.priceMult or 1) * 6)}, Appeal ~{appeal})`, if chosen then Theme.Mint else Theme.Buttercream, function()
 				selectedRecipe = id
 				showKitchen()
 			end)

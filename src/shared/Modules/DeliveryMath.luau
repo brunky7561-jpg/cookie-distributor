@@ -8,8 +8,8 @@ local Vehicles = require(Config.Vehicles)
 local DeliveryMath = {}
 
 DeliveryMath.ETA = 15 -- seconds until the courier arrives
-DeliveryMath.FEE = 4
-DeliveryMath.FREE_DELIVERY_FROM = 30
+DeliveryMath.FEE = 10
+DeliveryMath.FREE_DELIVERY_FROM = 150
 DeliveryMath.MAX_QTY_PER_ITEM = 50
 DeliveryMath.MAX_UNITS_PER_ORDER = 60
 DeliveryMath.MAX_PENDING = 5

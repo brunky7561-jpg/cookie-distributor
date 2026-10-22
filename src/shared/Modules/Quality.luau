@@ -1,10 +1,10 @@
 --!strict
--- Transparent 0-100 batch quality: recipe 40%, bake timing 30%, ingredient freshness 15%, portion consistency 15%.
+-- Transparent 0-100 batch quality: recipe 35%, bake timing 28%, dough mixing 10%, ingredient freshness 12%, portion consistency 15%.
 local Quality = {}
 
-export type Factors = { recipe: number, bake: number, fresh: number, portion: number } -- each 0..1
+export type Factors = { recipe: number, bake: number, fresh: number, portion: number, dough: number? } -- each 0..1; dough is the mixing minigame (missing counts as perfect)
 
-Quality.WEIGHTS = { recipe = 0.40, bake = 0.30, fresh = 0.15, portion = 0.15 }
+Quality.WEIGHTS = { recipe = 0.35, bake = 0.28, fresh = 0.12, portion = 0.15, dough = 0.10 }
 
 -- 1 at the ideal moment, falling to 0 once you are a full IDEAL away. `slack` seconds either side still score 1
 -- (better equipment forgives more).
@@ -15,7 +15,7 @@ end
 
 function Quality.score(f: Factors): number
 	local w = Quality.WEIGHTS
-	local total = f.recipe * w.recipe + f.bake * w.bake + f.fresh * w.fresh + f.portion * w.portion
+	local total = f.recipe * w.recipe + f.bake * w.bake + f.fresh * w.fresh + f.portion * w.portion + (f.dough or 1) * w.dough
 	return math.clamp(math.floor(total * 100 + 0.5), 0, 100)
 end
 
@@ -37,6 +37,7 @@ function Quality.feedback(f: Factors, bakeSigned: number): string
 		{ "portion", f.portion },
 		{ "fresh", f.fresh },
 		{ "recipe", f.recipe },
+		{ "dough", f.dough or 1 },
 	}
 	local weakest, value = "bake", 2
 	for _, entry in order do
@@ -54,6 +55,8 @@ function Quality.feedback(f: Factors, bakeSigned: number): string
 		return "This batch came out a little early; give it a few more seconds in the oven."
 	elseif weakest == "portion" then
 		return "The cookies came out uneven; stop the portion bar right in the green zone."
+	elseif weakest == "dough" then
+		return "The dough was a little lumpy; stir right when the marker is in the green zone."
 	elseif weakest == "fresh" then
 		return "Some ingredients were past their best."
 	end

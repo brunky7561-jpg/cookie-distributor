@@ -31,20 +31,20 @@ do -- Milestone 3: phone apps, CrumbChat dialogue, PantryDash deliveries
 	expect(not ok and d.cash == 3, "not enough cash refused, nothing taken: " .. tostring(msg))
 	d.cash = cash0
 
-	-- quote and purchase: $20 of goods pays the $4 fee
+	-- quote and purchase: $66 of goods pays the $10 fee
 	local q
-	ok, q = call(p, "PantryQuote", { { id = "flour", qty = 10 }, { id = "butter", qty = 5 } }, "apartment"); clock += 1
-	expect(ok and q.subtotal == 20 and q.fee == 4 and q.total == 24 and q.eta == 15, "quote: subtotal 20, fee 4, total 24, ETA 15s")
+	ok, q = call(p, "PantryQuote", { { id = "flour", qty = 5 }, { id = "butter", qty = 2 } }, "apartment"); clock += 1
+	expect(ok and q.subtotal == 66 and q.fee == 10 and q.total == 76 and q.eta == 15, "quote: subtotal 66, fee 10, total 76, ETA 15s")
 	local unitsBefore = DM.units(d)
-	ok, msg = order({ { id = "flour", qty = 10 }, { id = "butter", qty = 5 } }); clock += 1
-	expect(ok and d.cash == cash0 - 24, "charged exactly $24")
-	expect(d.stats.supplies == 20 and d.stats.delivery == 4, "ledger: supplies 20, delivery fee 4")
+	ok, msg = order({ { id = "flour", qty = 5 }, { id = "butter", qty = 2 } }); clock += 1
+	expect(ok and d.cash == cash0 - 76, "charged exactly $76")
+	expect(d.stats.supplies == 66 and d.stats.delivery == 10, "ledger: supplies 66, delivery fee 10")
 	expect(#d.deliveries == 1 and d.ingredients.flour == 6, "inventory unchanged until the crate is collected")
-	expect(DM.units(d) == unitsBefore + 15, "pending items count toward storage")
+	expect(DM.units(d) == unitsBefore + 7, "pending items count toward storage")
 
-	-- free delivery over $30
-	ok, q = call(p, "PantryQuote", { { id = "caramel", qty = 8 } }, "apartment"); clock += 1
-	expect(ok and q.fee == 0, "orders of $30 or more ship free")
+	-- free delivery over $150
+	ok, q = call(p, "PantryQuote", { { id = "caramel", qty = 5 } }, "apartment"); clock += 1
+	expect(ok and q.fee == 0, "orders of $150 or more ship free: " .. tostring(ok) .. " " .. tostring(type(q) == "table" and q.fee or q))
 
 	-- courier arrives, crate appears
 	tick(10)
@@ -65,10 +65,10 @@ do -- Milestone 3: phone apps, CrumbChat dialogue, PantryDash deliveries
 	config.distance = 0; clock += 1
 	local flourBefore = d.ingredients.flour
 	prompt.Triggered:_fire(p); settle()
-	expect(#d.deliveries == 0 and d.ingredients.flour == flourBefore + 10 and d.ingredients.butter == 9, "owner collects: items added to the pantry")
+	expect(#d.deliveries == 0 and d.ingredients.flour == flourBefore + 5 and d.ingredients.butter == 6, "owner collects: items added to the pantry")
 	clock += 1
 	prompt.Triggered:_fire(p); settle()
-	expect(d.ingredients.flour == flourBefore + 10, "collecting again adds nothing (no duplication)")
+	expect(d.ingredients.flour == flourBefore + 5, "collecting again adds nothing (no duplication)")
 	leave(thief)
 
 	-- storage can be full at collect time

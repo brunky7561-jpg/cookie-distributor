@@ -12,7 +12,7 @@ do -- Milestone 4: recipe variety, experiments, equipment upgrades
 		for ing, n in r.requires do cost += Ingredients[ing].cost * n end
 		local list = Recipes.expand(r.requires)
 		local a = Appeal.compute(list, 0.9).score
-		local offer = (6 * 45 / 6 + 3) * (r.priceMult or 1)
+		local offer = 6 * Recipes.SELL_PRICE * (r.priceMult or 1)
 		table.insert(rows, { id = id, cost = cost, appeal = a, offer = math.floor(offer + 0.5), level = r.unlockLevel })
 	end
 	table.sort(rows, function(x, y) return x.cost < y.cost end)

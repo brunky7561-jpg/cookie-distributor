@@ -347,4 +347,29 @@ do
 	join(studioDown)
 	store.fail = 0
 	expect(store.calls - callsBefore == 1 and T.state(studioDown) ~= nil, "Studio with a failing DataStore: one attempt, then temporary data")
+
+	-- 11. the dough minigame score feeds quality, and a miss never blocks progress
+	local function bakeWithMix(pl, mix)
+		local ok, info = call(pl, "BakeStart", "classic_chip", nil)
+		if not ok then return nil, info end
+		clock += 3.5; call(pl, "BakeStep", "mixDone", mix); clock += 0.5
+		call(pl, "BakeStep", "portionStart"); clock += 3; call(pl, "BakeStep", "portionStop"); clock += 0.5
+		call(pl, "BakeStep", "ovenStart"); clock += 6; call(pl, "BakeStep", "ovenPull"); clock += 0.5
+		clock += 4.6; call(pl, "BakeStep", "coolDone"); clock += 0.5
+		local packed, res = call(pl, "BakeStep", "pack", "standard")
+		return packed and res.batch or nil, res
+	end
+	local baker = newPlayer(9600, "Baker"); join(baker)
+	T.state(baker).ingredients = { flour = 20, butter = 20, white_sugar = 20, chocolate_chips = 20 }
+	local good = bakeWithMix(baker, 1)
+	clock += 2
+	local bad = bakeWithMix(baker, 0)
+	clock += 2
+	local junk = bakeWithMix(baker, "lots")
+	clock += 2
+	local over = bakeWithMix(baker, 99)
+	expect(good and bad and junk and over, "all four bakes finish, even with a zero dough score")
+	expect(good.factors.dough == 1 and bad.factors.dough == 0, "the dough score is stored in the quality factors")
+	expect(bad.score < good.score and good.score - bad.score <= 10, "a bad dough costs at most 10 points")
+	expect(junk.factors.dough == 1 and over.factors.dough == 1, "nonsense or oversized scores are ignored or clamped")
 end

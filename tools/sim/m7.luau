@@ -7,11 +7,11 @@ do -- Milestone 7: vehicles
 	local ok, msg = call(p, "VehicleBuy", "compact_car"); clock += 1
 	expect(not ok and string.find(msg, "level 4"), "level gate: " .. tostring(msg))
 	d.level = 4
-	expect(DM.eta(d.vehicles) == 15 and DM.fee(10, d.vehicles) == 4, "no vehicle: normal ETA and fee")
+	expect(DM.eta(d.vehicles) == 15 and DM.fee(10, d.vehicles) == 10, "no vehicle: normal ETA and fee")
 	ok = call(p, "VehicleBuy", "compact_car"); clock += 1
 	expect(ok and d.vehicles.compact_car and d.cash == 4200, "bought the compact car")
 	expect(DM.eta(d.vehicles) == 10, "compact car: shorter courier ETA " .. DM.eta(d.vehicles))
-	expect(DM.fee(10, d.vehicles) == 4, "compact car still pays the small-order fee")
+	expect(DM.fee(10, d.vehicles) == 10, "compact car still pays the small-order fee")
 	ok = call(p, "VehicleBuy", "compact_car"); clock += 1
 	expect(not ok, "cannot buy twice")
 	ok = call(p, "VehicleBuy", "tank"); clock += 1

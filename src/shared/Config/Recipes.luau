@@ -27,6 +27,7 @@ Recipes.boxes = {
 } :: { Types.BoxDef }
 
 Recipes.YIELD = 6
+Recipes.SELL_PRICE = 15 -- what one Classic Chip cookie is worth to a typical customer (priceMult scales it for other recipes)
 Recipes.CUSTOM_CORRECTNESS = { 0.85, 0.92, 1 } -- recipe correctness after 0, 1, 2+ earlier bakes of the same experiment
 Recipes.MAX_CUSTOM = 8
 
@@ -142,8 +143,8 @@ Recipes.catalog = {
 	classic_chip = def("classic_chip", "Classic Chip Cookies", { flavor = "white_sugar", mixin = "chocolate_chips" }, 1, 1, "Everyone's favorite. A safe bet."),
 	brown_sugar_chunk = def("brown_sugar_chunk", "Brown Sugar Chunk", { flavor = "brown_sugar", mixin = "chocolate_chips" }, 2, 1.15, "Chewier and richer than the classic."),
 	salted_chunk = def("salted_chunk", "Salted Chocolate Chunk", { flavor = "brown_sugar", mixin = "chocolate_chips", finish = "sea_salt" }, 3, 1.4, "Chocolate and salt are a famous pair. Foodies love it."),
-	caramel_crunch = def("caramel_crunch", "Caramel Espresso Crunch", { flavor = "caramel", mixin = "chocolate_chips", finish = "espresso_powder" }, 4, 1.8, "Bold and expensive. Impresses critics, overwhelms the shy."),
-	golden_honey = def("golden_honey", "Golden Honey Chip", { flavor = "golden_honey", mixin = "chocolate_chips" }, 6, 3.5, "A premium treat made with rare golden honey."),
+	caramel_crunch = def("caramel_crunch", "Caramel Espresso Crunch", { flavor = "caramel", mixin = "chocolate_chips", finish = "espresso_powder" }, 4, 2.2, "Bold and expensive. Impresses critics, overwhelms the shy."),
+	golden_honey = def("golden_honey", "Golden Honey Chip", { flavor = "golden_honey", mixin = "chocolate_chips" }, 6, 4.5, "A premium treat made with rare golden honey."),
 } :: { [string]: Types.RecipeDef }
 
 -- A named recipe that exactly matches these slots, if any.

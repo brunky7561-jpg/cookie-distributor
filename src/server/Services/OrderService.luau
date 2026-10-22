@@ -164,7 +164,7 @@ local function newOrder(player: Player, t: any, count: number, isFirst: boolean)
 		customerId = t.id,
 		recipeId = recipeId,
 		count = count,
-		offer = math.floor((count * t.budget / 6 + 3) * mult + 0.5),
+		offer = math.floor(count * Recipes.SELL_PRICE * (t.budget / 45) * mult + 0.5), -- Mrs. Park (budget 45) pays $15 per Classic cookie
 		state = "Available",
 		deadline = if isFirst then nil else os.time() + ORDER_LIFETIME,
 		destination = DESTINATION,
